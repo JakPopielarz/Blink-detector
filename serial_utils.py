@@ -1,4 +1,5 @@
 import serial
+import threading
 
 class Serial(serial.Serial):
     def __init__(self, com_port, baud, data_max_count=1000):
@@ -6,13 +7,22 @@ class Serial(serial.Serial):
             bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
         self.received = []
         self.data_max_count = data_max_count
+        self.receiving_thread = None
+        self.__do_receive = False
 
     """
     Receive data from a specified serial port.
     Save the decoded & cast to int signal to list of received data
     """
-    def receive(self):
-        while(1):
+    def start_receiving(self):
+        self.__do_receive = True
+        self.receiving_thread = threading.Thread(target=self.__receive, daemon=True)
+
+        print("Starting data receiving")
+        self.receiving_thread.start()
+
+    def __receive(self):
+        while(self.__do_receive):
             # Wait until there is data waiting in the serial buffer
             if(self.in_waiting > 0):
                 # Read data out of the buffer until a carraige return / new line is found
@@ -36,3 +46,8 @@ class Serial(serial.Serial):
 
         if len(self.received) > self.data_max_count:
             self.received.pop(0)
+    
+    def stop_receiving(self):
+        print("Stopping data receiving")
+        self.__do_receive = False
+        self.receiving_thread.join()
