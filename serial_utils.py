@@ -1,10 +1,16 @@
 import serial
 import threading
 
+from serial.serialutil import SerialException
+
 class Serial(serial.Serial):
     def __init__(self, com_port, baud, data_max_count=1000):
-        super().__init__(port=com_port, baudrate=baud, 
-            bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
+        try:
+            super().__init__(port=com_port, baudrate=baud, 
+                bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
+        except SerialException:
+            print("Couldn't open serial port " + self.port + ". Maybe the device isn't connected?")
+
         self.received = []
         self.data_max_count = data_max_count
         self.receiving_thread = None
@@ -15,11 +21,14 @@ class Serial(serial.Serial):
     Save the decoded & cast to int signal to list of received data
     """
     def start_receiving(self):
-        self.__do_receive = True
-        self.receiving_thread = threading.Thread(target=self.__receive, daemon=True)
+        if self.isOpen() and not self.__do_receive:
+            self.__do_receive = True
+            self.receiving_thread = threading.Thread(target=self.__receive, daemon=True)
 
-        print("Starting data receiving")
-        self.receiving_thread.start()
+            print("Starting data receiving")
+            self.receiving_thread.start()
+        else:
+            print("Couldn't start receiving data on serial port " + self.port + ". Try setting a different port.")
 
     def __receive(self):
         while(self.__do_receive):
@@ -48,6 +57,10 @@ class Serial(serial.Serial):
             self.received.pop(0)
     
     def stop_receiving(self):
-        print("Stopping data receiving")
-        self.__do_receive = False
-        self.receiving_thread.join()
+        if self.__do_receive:
+            print("Stopping data receiving")
+            self.__do_receive = False
+            self.receiving_thread.join()
+
+    def get_received(self):
+        return self.received

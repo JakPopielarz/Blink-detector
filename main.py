@@ -6,5 +6,8 @@ if __name__ == "__main__":
     comm.start_receiving()
 
     time.sleep(5)
+    print(">>>", comm.get_received())
 
+    
+    time.sleep(5)
     comm.stop_receiving()
