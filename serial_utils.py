@@ -11,7 +11,7 @@ class Serial(serial.Serial):
         except SerialException:
             print("Couldn't open serial port " + self.port + ". Maybe the device isn't connected?")
 
-        self.received = []
+        self.received = [0 for i in range(data_max_count)]
         self.data_max_count = data_max_count
         self.receiving_thread = None
         self.__do_receive = False
