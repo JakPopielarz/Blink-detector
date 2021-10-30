@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 class Plotter:
-    def __init__(self, x_data=None, y_data=None, interactive=True, title='', labels=[]):
+    def __init__(self, x_data=None, y_data=None, interactive=True, title='', labels=[], x_limits=[], y_limits=[]):
         self.x_data = x_data
         self.y_data = y_data
         self.figure = None
@@ -9,6 +9,7 @@ class Plotter:
         while len(labels) < 2:
             labels.append("")
         self.text = {'title': title, 'x_label': labels[0], 'y_label': labels[1]}
+        self.limits = {'x': x_limits, 'y': y_limits}
         if interactive:
             plt.ion()
         else:
@@ -19,8 +20,12 @@ class Plotter:
         ax = self.figure.add_subplot(111)
         ax.set_title(self.text['title'])
         ax.set_xlabel(self.text['x_label'])
+        if len(self.limits['x']) == 2:
+            ax.set_xlim(self.limits['x'])
         ax.set_ylabel(self.text['y_label'])
-        self.line_plot, = ax.plot(self.y_data, 'r-')
+        if len(self.limits['y']) == 2:
+            ax.set_ylim(self.limits['y'])
+        self.line_plot, = ax.plot(self.y_data)
         self.figure.canvas.draw()
         self.figure.canvas.flush_events()
     

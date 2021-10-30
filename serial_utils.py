@@ -38,7 +38,6 @@ class Serial(serial.Serial):
                 received_value= self.readline()
                 # Print the contents of the serial data
                 self.__save_data(self.__decode(received_value))
-                print(self.received)
 
     """
     Decode the value passed as argument & cast it to int

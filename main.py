@@ -6,15 +6,13 @@ import numpy
 if __name__ == "__main__":
     comm = serial_utils.Serial("COM6", 9600)
     comm.start_receiving()
-
-    time.sleep(5)
-
-    data_range = numpy.linspace(0, 1024, num=comm.data_max_count)
-    plotter = plot_utils.Plotter(x_data=data_range, y_data=comm.get_received(), title="Signal strength", labels=['Sample #', 'Signal strength'])
+    data_range = numpy.linspace(0, comm.data_max_count, num=comm.data_max_count)
+    plotter = plot_utils.Plotter(x_data=data_range, y_data=comm.get_received(), \
+        title="Signal strength", labels=['Sample #', 'Signal strength'], y_limits=[0, 1024])
     plotter.draw()
 
-    time.sleep(5)
-    plotter.update_data(y_data=comm.get_received())
-    time.sleep(5)
+    while(True):
+        time.sleep(5)
+        plotter.update_data(y_data=comm.get_received())
 
     comm.stop_receiving()
