@@ -31,13 +31,16 @@ class Serial(serial.Serial):
             print("Couldn't start receiving data on serial port " + self.port + ". Try setting a different port.")
 
     def __receive(self):
-        while(self.__do_receive):
-            # Wait until there is data waiting in the serial buffer
-            if(self.in_waiting > 0):
-                # Read data out of the buffer until a carraige return / new line is found
-                received_value= self.readline()
-                # Print the contents of the serial data
-                self.__save_data(self.__decode(received_value))
+        try:
+            while(self.__do_receive):
+                # Wait until there is data waiting in the serial buffer
+                if(self.in_waiting > 0):
+                    # Read data out of the buffer until a carraige return / new line is found
+                    received_value= self.readline()
+                    # Print the contents of the serial data
+                    self.__save_data(self.__decode(received_value))
+        except SerialException:
+            print("Something went wrong while receiving data from " + self.port + ". Shutting down.")
 
     """
     Decode the value passed as argument & cast it to int
