@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import threading
 
 class Plotter:
     def __init__(self, x_data=None, y_data=None, interactive=True, title='', labels=[], x_limits=[], y_limits=[], threshold=None):
@@ -34,7 +35,7 @@ class Plotter:
 
         self.figure.canvas.draw()
         self.figure.canvas.flush_events()
-    
+
     def update_data(self, x_data=None, y_data=None):
         if (x_data is None and y_data is None) or self.line_plot == None:
             return
