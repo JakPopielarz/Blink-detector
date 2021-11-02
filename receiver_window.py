@@ -6,9 +6,9 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import PySimpleGUI as sg
 matplotlib.use('TkAgg')
 
-inputs_layout = [[sg.Text("Threshold", size=15), sg.Input(key="-THRESHOLD_INPUT-", size=5)],
-    [sg.Checkbox("Single blink to activate", key="-1_BLINK_ACTIVATE-")],
-    [sg.Checkbox("Double blink to activate", key="-2_BLINK_ACTIVATE-")],
+inputs_layout = [[sg.Text("Threshold", size=15), sg.Input(500, key="-THRESHOLD_INPUT-", size=5, enable_events=True)],
+    [sg.Radio("Single blink to activate", "ACTIVATION_RADIO", key="-1_BLINK_ACTIVATE-", default=True)],
+    [sg.Radio("Double blink to activate", "ACTIVATION_RADIO", key="-2_BLINK_ACTIVATE-", default=False)],
     [sg.Text("Key to press", size=15), sg.Input(size=5)]]
 
 layout = [[sg.Column(inputs_layout), sg.Canvas(key='-CANVAS-')],
@@ -34,9 +34,20 @@ def run_window(window, plotter=None, comm=None):
     while True:
         if plotter is not None and comm is not None:
             plotter.update_data(y_data=comm.get_received())
-        event, values = window.read(timeout=100)  
+        event, values = window.read(timeout=100)
         if event == sg.WIN_CLOSED or event == 'Exit' or event == 'Ok':
             break
+        elif event == '-THRESHOLD_INPUT-' and plotter is not None:
+            val = values['-THRESHOLD_INPUT-']
+            if val == '':
+                val = '0'
+            try:
+                val = int(val)
+            except ValueError:
+                val = 0
+                window['-THRESHOLD_INPUT-'].Update('')
+            plotter.update_threshold(val)
+
 
 if __name__ == "__main__":
     fig = matplotlib.figure.Figure(figsize=(5, 4), dpi=100)
