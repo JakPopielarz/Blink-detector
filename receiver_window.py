@@ -5,15 +5,18 @@ import numpy as np
 import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import PySimpleGUI as sg
+from  pynput.keyboard import Key, Controller
 matplotlib.use('TkAgg')
 
+
+keyboard = Controller()
 
 sg.theme('DefaultNoMoreNagging')
 inputs_layout = [[sg.Text("COM port", size=15), sg.Input("COM6", key="-PORT_INPUT-", size=5, enable_events=True)],
     [sg.Text("Threshold", size=15), sg.Input(500, key="-THRESHOLD_INPUT-", size=5, enable_events=True)],
-    [sg.Radio("Single blink to activate", "ACTIVATION_RADIO", key="-1_BLINK_ACTIVATE-", default=True)],
-    [sg.Radio("Double blink to activate", "ACTIVATION_RADIO", key="-2_BLINK_ACTIVATE-", default=False)],
-    [sg.Text("Key to press", size=15), sg.Input("Enter", key="-KEY_BIND-", size=5)]]
+    [sg.Radio("Single blink to activate", "ACTIVATION_RADIO", key="-1_BLINK_ACTIVATE-", default=True, disabled=True)],
+    [sg.Radio("Double blink to activate", "ACTIVATION_RADIO", key="-2_BLINK_ACTIVATE-", default=False, disabled=True)],
+    [sg.Text("Key to press", size=15), sg.Input("Enter", key="-KEY_BIND-", size=5, disabled=True)]]
 
 layout = [[sg.Frame("Configuration", inputs_layout, font='Helvetica 18'), sg.Canvas(key='-CANVAS-')],
     [sg.Button('Ok')]]
@@ -84,8 +87,8 @@ def check_for_blink(comm, threshold_value, key_bind):
     sensor_data = comm.get_received()
     if not comm.triggered and sensor_data[-1] >= threshold_value:
         comm.triggered = True
-        print("Pressing a button: " + key_bind)
-        # TODO: Simulate SINGLE button press
+        keyboard.press(Key.enter)
+        keyboard.release(Key.enter)
     elif comm.triggered and sensor_data[-1] < threshold_value:
         comm.triggered = False
 
