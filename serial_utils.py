@@ -35,6 +35,7 @@ class Serial(serial.Serial):
             print("Starting data receiving")
             self.receiving_thread.start()
         else:
+            self.__save_data(0)
             print("Couldn't start receiving data on serial port " + self.port + ". Try setting a different port.")
 
     def __receive(self):
@@ -54,7 +55,10 @@ class Serial(serial.Serial):
     Decode the value passed as argument & cast it to int
     """
     def __decode(self, value):
-        return int(value.decode('Ascii'))
+        try:
+            return int(value.decode('Ascii').strip())
+        except:
+            return -100
 
     """
     Add the value to end of list of received data.

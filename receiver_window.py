@@ -35,18 +35,22 @@ def add_plot(window, figure, plot_key):
 
 def run_window(window, plotter=None, comm=None):
     while True:
-        if plotter is not None and comm is not None:
-            plotter.update_data(y_data=comm.get_received())
         event, values = window.read(timeout=100)
+        if event == sg.WIN_CLOSED or event == 'Exit' or event == 'Ok':
+            break
+        if plotter is None or comm is None:
+            return
+        
+        plotter.update_data(y_data=comm.get_received())
         
         check_receiving(comm, window)
 
-        if event == sg.WIN_CLOSED or event == 'Exit' or event == 'Ok':
-            break
-        elif event == '-THRESHOLD_INPUT-' and plotter is not None:
+        if event == '-THRESHOLD_INPUT-':
             handle_threshold(values['-THRESHOLD_INPUT-'], plotter, window)
         elif event == "-PORT_INPUT-":
+            comm.stop_receiving()
             comm.port = values["-PORT_INPUT-"]
+            comm.start_receiving()
 
 def check_receiving(comm, window):
     if comm is None:
