@@ -1,4 +1,3 @@
-import time
 import numpy
 import PySimpleGUI as sg
 
@@ -7,19 +6,30 @@ import plot_utils
 import receiver_window as rw
 
 
-def example_receive():
+def mock_receive():
+    window = rw.create_window()
+
     comm = serial_utils.Serial("COM6", 9600)
+    comm.mock = True
     comm.start_receiving()
+
     data_range = numpy.linspace(0, comm.data_max_count, num=comm.data_max_count)
     plotter = plot_utils.Plotter(x_data=data_range, y_data=comm.get_received(), \
         title="Signal strength", labels=['Sample #', 'Signal strength'], y_limits=[0, 1024], \
         threshold=500)
     plotter.draw()
-
-    while(True):
-        plotter.update_data(y_data=comm.get_received())
+    rw.add_plot(window, plotter.figure, "-CANVAS-")
+    
+    rw.run_window(window, plotter, comm)
 
     comm.stop_receiving()
+    window.close()
+
+def run_app():
+    window, plotter, comm = start()
+
+    rw.run_window(window, plotter, comm)
+    stop(window, comm)
 
 def start():
     window = rw.create_window()
@@ -29,7 +39,7 @@ def start():
     data_range = numpy.linspace(0, comm.data_max_count, num=comm.data_max_count)
     plotter = plot_utils.Plotter(x_data=data_range, y_data=comm.get_received(), \
         title="Signal strength", labels=['Sample #', 'Signal strength'], y_limits=[0, 1024], \
-        threshold=500, interactive=False)
+        threshold=500)
     plotter.draw()
     rw.add_plot(window, plotter.figure, "-CANVAS-")
 
@@ -41,8 +51,5 @@ def stop(window, serial_communication):
 
 
 if __name__ == "__main__":
-    # example_receive()
-    window, plotter, comm = start()
-
-    rw.run_window(window, plotter, comm)
-    stop(window, comm)
+    mock_receive()
+    # run_app()

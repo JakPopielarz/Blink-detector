@@ -9,11 +9,11 @@ matplotlib.use('TkAgg')
 
 
 sg.theme('DefaultNoMoreNagging')
-inputs_layout = [[sg.Text("COM port", size=15), sg.Input('COM6', key="-PORT_INPUT-", size=5, enable_events=True)],
+inputs_layout = [[sg.Text("COM port", size=15), sg.Input("COM6", key="-PORT_INPUT-", size=5, enable_events=True)],
     [sg.Text("Threshold", size=15), sg.Input(500, key="-THRESHOLD_INPUT-", size=5, enable_events=True)],
     [sg.Radio("Single blink to activate", "ACTIVATION_RADIO", key="-1_BLINK_ACTIVATE-", default=True)],
     [sg.Radio("Double blink to activate", "ACTIVATION_RADIO", key="-2_BLINK_ACTIVATE-", default=False)],
-    [sg.Text("Key to press", size=15), sg.Button("Enter", key="-KEY_BIND-", size=5)]]
+    [sg.Text("Key to press", size=15), sg.Input("Enter", key="-KEY_BIND-", size=5)]]
 
 layout = [[sg.Frame("Configuration", inputs_layout, font='Helvetica 18'), sg.Canvas(key='-CANVAS-')],
     [sg.Button('Ok')]]
@@ -42,17 +42,19 @@ def run_window(window, plotter=None, comm=None):
             return
         
         plotter.update_data(y_data=comm.get_received())
-        
-        check_receiving(comm, window)
 
+        threshold_value = int(values['-THRESHOLD_INPUT-'])
         if event == '-THRESHOLD_INPUT-':
-            handle_threshold(values['-THRESHOLD_INPUT-'], plotter, window)
-        elif event == "-PORT_INPUT-":
+            threshold_value = handle_threshold(values['-THRESHOLD_INPUT-'], plotter, window)
+
+        check_receiving(comm, window, threshold_value, values['-KEY_BIND-'])
+
+        if event == "-PORT_INPUT-":
             comm.stop_receiving()
             comm.port = values["-PORT_INPUT-"]
             comm.start_receiving()
 
-def check_receiving(comm, window):
+def check_receiving(comm, window, threshold_value, key_bind):
     if comm is None:
         return
     elif comm.error_in_receiving:
@@ -63,6 +65,7 @@ def check_receiving(comm, window):
         block_inputs(window)
         comm.start_receiving()
     else:
+        check_for_blink(comm, threshold_value, key_bind)
         unblock_inputs(window)
 
 def block_inputs(window):
@@ -73,9 +76,18 @@ def block_inputs(window):
 
 def unblock_inputs(window):
     window['-THRESHOLD_INPUT-'].update(disabled=False)
-    window['-1_BLINK_ACTIVATE-'].update(disabled=False)
-    window['-2_BLINK_ACTIVATE-'].update(disabled=False)
-    window['-KEY_BIND-'].update(disabled=False)
+    # window['-1_BLINK_ACTIVATE-'].update(disabled=False)
+    # window['-2_BLINK_ACTIVATE-'].update(disabled=False)
+    # window['-KEY_BIND-'].update(disabled=False)
+
+def check_for_blink(comm, threshold_value, key_bind):
+    sensor_data = comm.get_received()
+    if not comm.triggered and sensor_data[-1] >= threshold_value:
+        comm.triggered = True
+        print("Pressing a button: " + key_bind)
+        # TODO: Simulate SINGLE button press
+    elif comm.triggered and sensor_data[-1] < threshold_value:
+        comm.triggered = False
 
 def handle_threshold(new_val, plotter, window):
     if new_val == '':
@@ -86,6 +98,7 @@ def handle_threshold(new_val, plotter, window):
         new_val = 0
         window['-THRESHOLD_INPUT-'].Update('')
     plotter.update_threshold(new_val)
+    return new_val
 
 
 if __name__ == "__main__":

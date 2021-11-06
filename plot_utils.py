@@ -1,8 +1,7 @@
 import matplotlib.pyplot as plt
-import threading
 
 class Plotter:
-    def __init__(self, x_data=None, y_data=None, interactive=True, title='', labels=[], x_limits=[], y_limits=[], threshold=None):
+    def __init__(self, x_data=None, y_data=None, interactive=False, title='', labels=[], x_limits=[], y_limits=[], threshold=None):
         self.x_data = x_data
         self.y_data = y_data
         self.figure = None

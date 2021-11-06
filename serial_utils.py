@@ -1,5 +1,6 @@
 import serial
 import threading
+import time
 
 from serial.serialutil import SerialException
 
@@ -16,6 +17,8 @@ class Serial(serial.Serial):
         self.receiving_thread = None
         self.receiving = False
         self.error_in_receiving = False
+        self.triggered = False
+        self.mock = False # For testing purposes only
 
     """
     Receive data from a specified serial port.
@@ -24,15 +27,21 @@ class Serial(serial.Serial):
     """
     def start_receiving(self):
         try:
-            self.open()
+            if not self.mock:
+                self.open()
         except SerialException:
             print("Couldn't open serial port " + self.port + ". Maybe the device isn't connected?")
 
-        if self.isOpen() and not self.receiving:
+        if self.isOpen() and not self.receiving and not self.mock:
             self.receiving = True
             self.receiving_thread = threading.Thread(target=self.__receive, daemon=True)
 
             print("Starting data receiving")
+            self.receiving_thread.start()
+        elif not self.receiving and self.mock: # For testing purposes only
+            self.receiving = True
+            self.receiving_thread = threading.Thread(target=self.__mock_receive, daemon=True)
+            print("Starting MOCKING data receiving")
             self.receiving_thread.start()
         else:
             self.__save_data(0)
@@ -44,11 +53,33 @@ class Serial(serial.Serial):
                 # Wait until there is data waiting in the serial buffer
                 if(self.in_waiting > 0):
                     # Read data out of the buffer until a carraige return / new line is found
-                    received_value= self.readline()
+                    received_value = self.readline()
                     # Print the contents of the serial data
                     self.__save_data(self.__decode(received_value))
         except SerialException:
             print("Something went wrong while receiving data from " + self.port + ". Shutting down.")
+            self.error_in_receiving = True
+
+    """
+    For testing purposes only
+    """
+    def __mock_receive(self):
+        try:
+            modifier = 1
+            step = 3
+            while(self.receiving):
+                if self.received[-1] > 700:
+                    modifier *= -1
+                    mock_data = self.received[-1] - 2*step
+                elif self.received[-1] < 200:
+                    modifier *= -1
+                    mock_data = self.received[-1] + 2*step
+                else:
+                    mock_data += step * modifier
+                self.__save_data(mock_data)
+                time.sleep(0.05)
+        except:
+            print("Something went wrong while MOCK receiving data from " + self.port + ". Shutting down.")
             self.error_in_receiving = True
 
     """
