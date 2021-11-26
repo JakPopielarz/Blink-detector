@@ -20,10 +20,10 @@ def mock_receive():
     plotter.draw()
     rw.add_plot(window, plotter.figure, "-CANVAS-")
     
-    rw.run_window(window, plotter, comm)
+    rw.run_window(window, plotter, comm, mock=True)
 
-    comm.stop_receiving()
     window.close()
+    comm.stop_receiving()
 
 def run_app():
     window, plotter, comm = start()
@@ -46,8 +46,8 @@ def start():
     return window, plotter, comm
 
 def stop(window, serial_communication):
-    serial_communication.stop_receiving()
     window.close()
+    serial_communication.stop_receiving()
 
 
 if __name__ == "__main__":

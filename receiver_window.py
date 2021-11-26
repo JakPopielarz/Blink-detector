@@ -47,7 +47,7 @@ def create_window():
 def add_plot(window, figure, plot_key):
     return draw_figure(window[plot_key].TKCanvas, figure)
 
-def run_window(window, plotter=None, comm=None):
+def run_window(window, plotter=None, comm=None, mock=False):
     global mouse_bind, bind_keyboard
     while True:
         event, values = window.read(timeout=100)
@@ -64,7 +64,7 @@ def run_window(window, plotter=None, comm=None):
 
         check_receiving(comm, window, threshold_value)
 
-        if event == "-PORT_INPUT-":
+        if event == "-PORT_INPUT-" and not mock:
             comm.stop_receiving()
             comm.port = values["-PORT_INPUT-"]
             comm.start_receiving()
