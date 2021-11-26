@@ -49,6 +49,10 @@ def add_plot(window, figure, plot_key):
 
 def run_window(window, plotter=None, comm=None, mock=False):
     global mouse_bind, bind_keyboard
+    configuration = sg.UserSettings()
+    configuration.load()
+    apply_configuration(configuration, window, plotter, comm)
+
     while True:
         event, values = window.read(timeout=100)
         if event == sg.WIN_CLOSED or event == 'Exit' or event == 'Ok':
@@ -57,27 +61,70 @@ def run_window(window, plotter=None, comm=None, mock=False):
             return
         
         plotter.update_data(y_data=comm.get_received())
-
         threshold_value = int(values['-THRESHOLD_INPUT-'])
         if event == '-THRESHOLD_INPUT-':
             threshold_value = handle_threshold(values['-THRESHOLD_INPUT-'], plotter, window)
+            configuration['-threshold-'] = threshold_value
 
         check_receiving(comm, window, threshold_value)
 
         if event == "-PORT_INPUT-" and not mock:
+            port = values["-PORT_INPUT-"]
             comm.stop_receiving()
-            comm.port = values["-PORT_INPUT-"]
+            comm.port = port
             comm.start_receiving()
+            configuration['-port-'] = port
+        elif event == "-PORT_INPUT-":
+            port = values["-PORT_INPUT-"]
+            configuration['-port-'] = port
         elif event == "-CHANGE_KEY-":
             handle_key_bind(window, "-CURRENT_KEY-")
+            configuration['-key-'] = str(window["-CURRENT_KEY-"].get())
         elif event == "-LMB_BIND-":
             bind_keyboard = False
             mouse_bind = Button.left
+            configuration['-bind-'] = 'LMB'
         elif event == "-RMB_BIND-":
             bind_keyboard = False
             mouse_bind = Button.right
+            configuration['-bind-'] = 'RMB'
         elif event == "-KEY_BIND-":
             bind_keyboard = True
+            configuration['-bind-'] = 'KEY'
+
+def apply_configuration(configuration, window, plotter, comm):
+    global mouse_bind, bind_keyboard
+    if configuration['-threshold-']:
+        threshold_value = configuration['-threshold-']
+        window['-THRESHOLD_INPUT-'].update(threshold_value)
+        handle_threshold(threshold_value, plotter, window)
+    if configuration['-port-']:
+        port = configuration['-port-']
+        window['-PORT_INPUT-'].update(port)
+        if comm:
+            comm.stop_receiving()
+            comm.port = port
+            comm.start_receiving()
+    if configuration['-key-']:
+        window['-CURRENT_KEY-'].update(configuration['-key-'])
+    if configuration['-bind-'] == 'LMB':
+        bind_keyboard = False
+        mouse_bind = Button.left
+        window['-LMB_BIND-'].update(True)
+        window['-RMB_BIND-'].update(False)
+        window['-KEY_BIND-'].update(False)
+    elif configuration['-bind-'] == 'RMB':
+        bind_keyboard = False
+        mouse_bind = Button.right
+        window['-LMB_BIND-'].update(False)
+        window['-RMB_BIND-'].update(True)
+        window['-KEY_BIND-'].update(False)
+    elif configuration['-bind-'] == 'KEY':
+        handle_key_bind(window, "-CURRENT_KEY-")
+        bind_keyboard = True
+        window['-LMB_BIND-'].update(False)
+        window['-RMB_BIND-'].update(False)
+        window['-KEY_BIND-'].update(True)
 
 def check_receiving(comm, window, threshold_value):
     if comm is None:
@@ -146,13 +193,3 @@ def handle_key_bind(window, text_key):
     sg.Popup("Press the button you want to be pressed", keep_on_top=True, any_key_closes=True, button_type=sg.POPUP_BUTTONS_NO_BUTTONS)
     key_listener.stop()
 
-
-if __name__ == "__main__":
-    fig = matplotlib.figure.Figure(figsize=(5, 4), dpi=100)
-    t = np.arange(0, 3, .01)
-    fig.add_subplot(111).plot(t, 2 * np.sin(2 * np.pi * t))
-
-    window = create_window()
-    add_plot(window, fig, "-CANVAS-")
-    run_window(window)
-    window.close()

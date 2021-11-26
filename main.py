@@ -23,6 +23,7 @@ def mock_receive():
     rw.run_window(window, plotter, comm, mock=True)
 
     window.close()
+    del window
     comm.stop_receiving()
 
 def run_app():
@@ -47,6 +48,7 @@ def start():
 
 def stop(window, serial_communication):
     window.close()
+    del window
     serial_communication.stop_receiving()
 
 
