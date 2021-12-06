@@ -19,6 +19,7 @@ class Serial(serial.Serial):
         self.error_in_receiving = False
         self.triggered = False
         self.mock = False # For testing purposes only
+        self.points_delta = 0
 
     """
     Receive data from a specified serial port.
@@ -92,6 +93,7 @@ class Serial(serial.Serial):
     """
     def __save_data(self, value):
         self.received.append(value)
+        self.points_delta += 1
 
         if len(self.received) > self.data_max_count:
             self.received.pop(0)
@@ -104,3 +106,8 @@ class Serial(serial.Serial):
 
     def get_received(self):
         return self.received
+
+    def get_received_delta(self):
+        points_count = self.points_delta
+        self.points_delta = 0
+        return self.received[-points_count:]
