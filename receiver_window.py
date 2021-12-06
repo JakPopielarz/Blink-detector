@@ -1,11 +1,8 @@
 # from matplotlib.ticker import NullFormatter  # useful for `logit` scale
 # import matplotlib.pyplot as plt
-from logging import disable
-import numpy as np
 import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import PySimpleGUI as sg
-from numpy.typing import _128Bit
 from  pynput.keyboard import Key, Listener
 from pynput.keyboard import Controller as KeyboardController
 from pynput.mouse import Button
@@ -59,8 +56,14 @@ def run_window(window, plotter=None, comm=None, mock=False):
             break
         if plotter is None or comm is None:
             return
-        
-        plotter.update_data(y_data=comm.get_received())
+
+        # no need to update the plotter y data, because it was inicialized as a reference to `received` array from object of Serial
+        plotter.refresh_y_data()
+
+        # in case there would be a need to update the y data there are following methods provided:
+        # plotter.update_data(y_data=comm.get_received())
+        # plotter.append_y_data(comm.get_received_delta())
+
         threshold_value = int(values['-THRESHOLD_INPUT-'])
         if event == '-THRESHOLD_INPUT-':
             threshold_value = handle_threshold(values['-THRESHOLD_INPUT-'], plotter, window)

@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 class Plotter:
-    def __init__(self, x_data=None, y_data=None, interactive=False, title='', labels=[], x_limits=[], y_limits=[], threshold=None):
+    def __init__(self, x_data=None, y_data=None, interactive=False, title='', labels=[], x_limits=[], y_limits=[], threshold=None, max_data_points=1000):
         self.x_data = x_data
         self.y_data = y_data
         self.figure = None
@@ -16,6 +16,7 @@ class Plotter:
             plt.ioff()
         self.threshold = threshold
         self.threshold_line = None
+        self.max_data_points = max_data_points
 
     def draw(self):
         self.figure = plt.figure()
@@ -36,18 +37,44 @@ class Plotter:
         self.figure.canvas.flush_events()
 
     def update_data(self, x_data=None, y_data=None):
-        if (x_data is None and y_data is None) or self.line_plot == None:
+        if (x_data is None and y_data is None) or self.line_plot is None:
             return
 
         if y_data is not None:
+            self.y_data = y_data
             self.line_plot.set_ydata(y_data)
         if x_data is not None:
+            self.x_data = x_data
             self.line_plot.set_xdata(x_data)
         self.figure.canvas.draw()
         self.figure.canvas.flush_events()
     
+    def append_y_data(self, data_to_append):
+        if self.line_plot is None:
+            return
+
+        print(self.y_data, data_to_append)
+
+        self.y_data += data_to_append
+        while len(self.y_data) > self.max_data_points:
+            self.y_data.pop(0)
+
+        print(self.y_data, len(self.y_data))
+        
+        self.line_plot.set_ydata(self.y_data)
+
+        self.figure.canvas.draw()
+        self.figure.canvas.flush_events()
+
     def update_threshold(self, threshold):
         self.threshold = threshold
         self.threshold_line.set_ydata([threshold, threshold])
+        self.figure.canvas.draw()
+        self.figure.canvas.flush_events()
+    
+    def refresh_y_data(self):
+        if self.line_plot is None:
+            return
+        self.line_plot.set_ydata(self.y_data)
         self.figure.canvas.draw()
         self.figure.canvas.flush_events()
