@@ -54,6 +54,7 @@ def run_window(window, plotter=None, comm=None, det=None, mock=False):
             return
  
         if det is not None:
+            check_receiving(comm, window, det)
             det.detect()
 
         # no need to update the plotter y data, because it was inicialized as a reference to `received` array from object of Serial
@@ -117,8 +118,7 @@ def apply_configuration(configuration, window, comm):
         window['-RMB_BIND-'].update(False)
         window['-KEY_BIND-'].update(True)
 
-# TODO
-def check_receiving(comm, window, threshold_value):
+def check_receiving(comm, window, det):
     if comm is None:
         return
     elif comm.error_in_receiving:
@@ -129,20 +129,17 @@ def check_receiving(comm, window, threshold_value):
         block_inputs(window)
         comm.start_receiving()
     else:
-        check_for_blink(comm, threshold_value)
+        check_for_blink(comm, det)
         unblock_inputs(window)
 
 def block_inputs(window):
-    window['-THRESHOLD_INPUT-'].update(disabled=True)
     window['-CHANGE_KEY-'].update(disabled=True)
 
 def unblock_inputs(window):
-    window['-THRESHOLD_INPUT-'].update(disabled=False)
     window['-CHANGE_KEY-'].update(disabled=False)
 
-def check_for_blink(comm, threshold_value):
-    sensor_data = comm.get_received()
-    if not comm.triggered and sensor_data[-1] >= threshold_value:
+def check_for_blink(comm, det):
+    if not comm.triggered and det.signals[-1] > 600:
         comm.triggered = True
         if bind_keyboard:
             keyboard.press(key_bind)
@@ -150,7 +147,7 @@ def check_for_blink(comm, threshold_value):
         else:
             mouse.press(mouse_bind)
             mouse.release(mouse_bind)
-    elif comm.triggered and sensor_data[-1] < threshold_value:
+    elif comm.triggered and det.signals[-1] <= 600:
         comm.triggered = False
 
 def handle_key_bind(window, text_key):
