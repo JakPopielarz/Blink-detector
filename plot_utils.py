@@ -18,6 +18,9 @@ class Plotter:
         self.threshold_line = None
         self.max_data_points = max_data_points
 
+        self.signal_data = [0] * max_data_points
+        self.signal_plot = None
+
     def draw(self):
         self.figure = plt.figure()
         ax = self.figure.add_subplot(111)
@@ -32,6 +35,8 @@ class Plotter:
 
         if self.threshold is not None:
             self.threshold_line, = ax.plot([0, max(self.x_data)], [self.threshold, self.threshold], color='r')
+
+        self.signal_plot, = ax.plot(self.signal_data)
 
         self.figure.canvas.draw()
         self.figure.canvas.flush_events()
@@ -76,5 +81,6 @@ class Plotter:
         if self.line_plot is None:
             return
         self.line_plot.set_ydata(self.y_data)
+        self.signal_plot.set_ydata(self.signal_data)
         self.figure.canvas.draw()
         self.figure.canvas.flush_events()

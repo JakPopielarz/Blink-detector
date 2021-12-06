@@ -7,8 +7,9 @@ from  pynput.keyboard import Key, Listener
 from pynput.keyboard import Controller as KeyboardController
 from pynput.mouse import Button
 from pynput.mouse import Controller as MouseController
-matplotlib.use('TkAgg')
 
+from detector_utils import Detector
+matplotlib.use('TkAgg')
 
 bind_keyboard = True
 keyboard = KeyboardController()
@@ -44,11 +45,13 @@ def create_window():
 def add_plot(window, figure, plot_key):
     return draw_figure(window[plot_key].TKCanvas, figure)
 
-def run_window(window, plotter=None, comm=None, mock=False):
+def run_window(window, plotter=None, comm=None, det=None, mock=False):
     global mouse_bind, bind_keyboard
     configuration = sg.UserSettings()
     configuration.load()
     apply_configuration(configuration, window, plotter, comm)
+
+    det = Detector(comm.get_received(), 500, 5, 0)
 
     while True:
         event, values = window.read(timeout=100)
@@ -56,13 +59,16 @@ def run_window(window, plotter=None, comm=None, mock=False):
             break
         if plotter is None or comm is None:
             return
+ 
+        plotter.signal_data = det.detect()[::]
 
         # no need to update the plotter y data, because it was inicialized as a reference to `received` array from object of Serial
         plotter.refresh_y_data()
 
-        # in case there would be a need to update the y data there are following methods provided:
+        # # in case there would be a need to update the y data there are following methods provided:
         # plotter.update_data(y_data=comm.get_received())
         # plotter.append_y_data(comm.get_received_delta())
+
 
         threshold_value = int(values['-THRESHOLD_INPUT-'])
         if event == '-THRESHOLD_INPUT-':

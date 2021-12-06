@@ -53,5 +53,5 @@ def stop(window, serial_communication):
 
 
 if __name__ == "__main__":
-    mock_receive()
-    # run_app()
+    # mock_receive()
+    run_app()
