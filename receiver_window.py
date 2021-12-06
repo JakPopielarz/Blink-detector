@@ -1,5 +1,3 @@
-# from matplotlib.ticker import NullFormatter  # useful for `logit` scale
-# import matplotlib.pyplot as plt
 import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import PySimpleGUI as sg
@@ -8,7 +6,6 @@ from pynput.keyboard import Controller as KeyboardController
 from pynput.mouse import Button
 from pynput.mouse import Controller as MouseController
 
-from detector_utils import Detector
 matplotlib.use('TkAgg')
 
 bind_keyboard = True
@@ -20,9 +17,6 @@ mouse_bind = Button.left
 
 sg.theme('DefaultNoMoreNagging')
 inputs_layout = [[sg.Text("COM port", size=15), sg.Input("COM6", key="-PORT_INPUT-", size=5, enable_events=True)],
-    [sg.Text("Threshold", size=15), sg.Input(500, key="-THRESHOLD_INPUT-", size=5, enable_events=True)],
-    [sg.Radio("Single blink to activate", "ACTIVATION_RADIO", key="-1_BLINK_ACTIVATE-", default=True, disabled=True)],
-    [sg.Radio("Double blink to activate", "ACTIVATION_RADIO", key="-2_BLINK_ACTIVATE-", default=False, disabled=True)],
     [sg.Text("Key to press", size=10), sg.Input("Enter", key="-CURRENT_KEY-", size=5, enable_events=True, disabled=True), sg.Button("Change key", key="-CHANGE_KEY-", size=10)],
     [sg.Radio("Key", "BIND_RADIO", key="-KEY_BIND-", default=True, enable_events=True), sg.Radio("LMB", "BIND_RADIO", key="-LMB_BIND-", default=False, enable_events=True), 
         sg.Radio("RMB", "BIND_RADIO", key="-RMB_BIND-", default=False, enable_events=True)]]
@@ -49,9 +43,8 @@ def run_window(window, plotter=None, comm=None, det=None, mock=False):
     global mouse_bind, bind_keyboard
     configuration = sg.UserSettings()
     configuration.load()
-    apply_configuration(configuration, window, plotter, comm)
+    apply_configuration(configuration, window, comm)
 
-    det = Detector(comm.get_received(), 500, 5, 0)
 
     while True:
         event, values = window.read(timeout=100)
@@ -60,7 +53,8 @@ def run_window(window, plotter=None, comm=None, det=None, mock=False):
         if plotter is None or comm is None:
             return
  
-        plotter.signal_data = det.detect()[::]
+        if det is not None:
+            det.detect()
 
         # no need to update the plotter y data, because it was inicialized as a reference to `received` array from object of Serial
         plotter.refresh_y_data()
@@ -68,14 +62,6 @@ def run_window(window, plotter=None, comm=None, det=None, mock=False):
         # # in case there would be a need to update the y data there are following methods provided:
         # plotter.update_data(y_data=comm.get_received())
         # plotter.append_y_data(comm.get_received_delta())
-
-
-        threshold_value = int(values['-THRESHOLD_INPUT-'])
-        if event == '-THRESHOLD_INPUT-':
-            threshold_value = handle_threshold(values['-THRESHOLD_INPUT-'], plotter, window)
-            configuration['-threshold-'] = threshold_value
-
-        check_receiving(comm, window, threshold_value)
 
         if event == "-PORT_INPUT-" and not mock:
             port = values["-PORT_INPUT-"]
@@ -101,12 +87,8 @@ def run_window(window, plotter=None, comm=None, det=None, mock=False):
             bind_keyboard = True
             configuration['-bind-'] = 'KEY'
 
-def apply_configuration(configuration, window, plotter, comm):
+def apply_configuration(configuration, window, comm):
     global mouse_bind, bind_keyboard
-    if configuration['-threshold-']:
-        threshold_value = configuration['-threshold-']
-        window['-THRESHOLD_INPUT-'].update(threshold_value)
-        handle_threshold(threshold_value, plotter, window)
     if configuration['-port-']:
         port = configuration['-port-']
         window['-PORT_INPUT-'].update(port)
@@ -135,6 +117,7 @@ def apply_configuration(configuration, window, plotter, comm):
         window['-RMB_BIND-'].update(False)
         window['-KEY_BIND-'].update(True)
 
+# TODO
 def check_receiving(comm, window, threshold_value):
     if comm is None:
         return
@@ -151,14 +134,10 @@ def check_receiving(comm, window, threshold_value):
 
 def block_inputs(window):
     window['-THRESHOLD_INPUT-'].update(disabled=True)
-    window['-1_BLINK_ACTIVATE-'].update(disabled=True)
-    window['-2_BLINK_ACTIVATE-'].update(disabled=True)
     window['-CHANGE_KEY-'].update(disabled=True)
 
 def unblock_inputs(window):
     window['-THRESHOLD_INPUT-'].update(disabled=False)
-    # window['-1_BLINK_ACTIVATE-'].update(disabled=False)
-    # window['-2_BLINK_ACTIVATE-'].update(disabled=False)
     window['-CHANGE_KEY-'].update(disabled=False)
 
 def check_for_blink(comm, threshold_value):
@@ -173,17 +152,6 @@ def check_for_blink(comm, threshold_value):
             mouse.release(mouse_bind)
     elif comm.triggered and sensor_data[-1] < threshold_value:
         comm.triggered = False
-
-def handle_threshold(new_val, plotter, window):
-    if new_val == '':
-        new_val = '0'
-    try:
-        new_val = int(new_val)
-    except ValueError:
-        new_val = 0
-        window['-THRESHOLD_INPUT-'].Update('')
-    plotter.update_threshold(new_val)
-    return new_val
 
 def handle_key_bind(window, text_key):
     def __rebind(bind):

@@ -17,12 +17,14 @@ class Detector():
         self.signals = np.array([500]*len(y_data))
 
     def detect(self):
-        self.signals = np.array([500]*len(self.y))
+        # self.signals = np.array([500]*len(self.y))
+        self.add_zero(self.signals)
         self.avg_filter = [0]*len(self.y)
         self.std_filter = [0]*len(self.y)
         self.avg_filter[self.lag - 1] = np.mean(self.y[0:self.lag])
         self.std_filter[self.lag - 1] = np.std(self.y[0:self.lag])
         self.filtered_y = np.array(self.y)
+
         for i in range(self.lag, len(self.y)):
             if abs(self.y[i] - self.avg_filter[i-1]) > self.threshold * self.std_filter [i-1]:
                 if self.y[i] > self.avg_filter[i-1]:
@@ -41,6 +43,10 @@ class Detector():
 
         return np.asarray(self.signals)
 
+    def add_zero(self, array):
+        array += [0]
+        while len(array) > len(self.y):
+            array.pop(0)
 
 
 def thresholding_algo(y, lag, threshold, influence):
