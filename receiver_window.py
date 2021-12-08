@@ -46,7 +46,7 @@ def run_window(window, plotter=None, comm=None, det=None, mock=False):
     global mouse_bind, bind_keyboard
     configuration = sg.UserSettings()
     configuration.load()
-    apply_configuration(configuration, window, comm)
+    apply_configuration(configuration, window, comm, det)
 
     calibrate(det, plotter)
 
@@ -97,8 +97,9 @@ def run_window(window, plotter=None, comm=None, det=None, mock=False):
             display_help()
         elif event == "-THRESHOLD_INPUT-":
             handle_threshold(values['-THRESHOLD_INPUT-'], window, det)
+            configuration['-threshold-'] = values['-THRESHOLD_INPUT-']
 
-def apply_configuration(configuration, window, comm):
+def apply_configuration(configuration, window, comm, det):
     global mouse_bind, bind_keyboard
     if configuration['-port-']:
         port = configuration['-port-']
@@ -127,6 +128,14 @@ def apply_configuration(configuration, window, comm):
         window['-LMB_BIND-'].update(False)
         window['-RMB_BIND-'].update(False)
         window['-KEY_BIND-'].update(True)
+    if configuration['-threshold-']:
+        window['-THRESHOLD_INPUT-'].update(configuration['-threshold-'])
+        det.threshold = float(configuration['-threshold-'])
+    
+    if not configuration['-first-']:
+        display_help()
+
+    configuration['-first-'] = False
 
 def calibrate(det, plotter):
     sg.Popup("Please wait for the calibration to complete.\nPlease don't try to do anything in particular, just be yourself and enjoy the calibration period. It shouldn't take more than 10 seconds, so not much more to go!", keep_on_top=True, auto_close=True, auto_close_duration=10, button_type=sg.POPUP_BUTTONS_NO_BUTTONS)
@@ -186,15 +195,27 @@ def handle_key_bind(window, text_key):
     key_listener.stop()
 
 def display_help():
-    help_text = """Lorem Ipsum
-Dolor sit amet"""
+    help_text = """Hi!
+On the right side of the main window you can see the plot of current signal, threshold and detection.
+The blue, wiggly line is signal received from the device.
+The red, straight line is the current detection border - calculated as threshold * standard deviation + mean of the received signal.
+The orange line depicts the detections - if it raises to the top a blink has been detected.
+
+On the left side of the main window you can see the configuration pane and in it some fields:
+- COM port : the serial communication port through which the communication happens. Make sure to select the one that your device is connected into.
+- Threshold : the number of standart deviations from the mean above which the blink will be detected. Marked on the plot with a red line (value = threshold * standard deviation + mean). IMPORTANT: Changing this doesn't take effect untill calibration!
+- Key to press : just displays the current keybind, which can be changed using the "Change key" button. During changing the bind blink detection will be suspended untill a key is pressed (and thus key bound).
+- Key / LMB / RMB : radio buttons, which specify wheter the bound key, or according (left/right) mouse button will be pressed on blink detection.
+- Calibrate : button starting the calibration process. It takes around 10 seconds, so get comfortable and relax.
+- Help button : displays this window.
+"""
     sg.Popup(help_text, keep_on_top=True)
 
 def handle_threshold(new_val, window, det):
     if new_val == '':
         new_val = '0'
     try:
-        new_val = int(new_val)
+        new_val = float(new_val)
     except ValueError:
         new_val = 0
         window['-THRESHOLD_INPUT-'].Update('')

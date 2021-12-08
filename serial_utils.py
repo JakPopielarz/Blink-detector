@@ -21,12 +21,12 @@ class Serial(serial.Serial):
         self.mock = False # For testing purposes only
         self.points_delta = 0
 
-    """
-    Receive data from a specified serial port.
-    Save the decoded & cast to int signal to list of received data
-    Returns bool indicating if succededd
-    """
     def start_receiving(self):
+        """
+        Receive data from a specified serial port.
+        Save the decoded & cast to int signal to list of received data
+        Returns bool indicating if succededd
+        """
         try:
             if not self.mock:
                 self.open()
@@ -57,10 +57,10 @@ class Serial(serial.Serial):
         except SerialException:
             self.error_in_receiving = True
 
-    """
-    For testing purposes only
-    """
     def __mock_receive(self):
+        """
+        For testing purposes only
+        """
         try:
             modifier = 1
             step = 3
@@ -78,20 +78,20 @@ class Serial(serial.Serial):
         except:
             self.error_in_receiving = True
 
-    """
-    Decode the value passed as argument & cast it to int
-    """
     def __decode(self, value):
+        """
+        Decode the value passed as argument & cast it to int
+        """
         try:
             return int(value.decode('Ascii').strip())
         except:
             return -100
 
-    """
-    Add the value to end of list of received data.
-    If length of the list is bigger than specified on init - pop first element
-    """
     def __save_data(self, value):
+        """
+        Add the value to end of list of received data.
+        If length of the list is bigger than specified on init - pop first element
+        """
         self.received.append(value)
         self.points_delta += 1
 
