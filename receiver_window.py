@@ -1,7 +1,6 @@
 import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import PySimpleGUI as sg
-import threading
 from  pynput.keyboard import Key, Listener
 from pynput.keyboard import Controller as KeyboardController
 from pynput.mouse import Button
@@ -135,7 +134,7 @@ def apply_configuration(configuration, window, comm, det):
     if not configuration['-first-']:
         display_help()
 
-    configuration['-first-'] = False
+    configuration['-first-'] = "False"
 
 def calibrate(det, plotter):
     sg.Popup("Please wait for the calibration to complete.\nPlease don't try to do anything in particular, just be yourself and enjoy the calibration period. It shouldn't take more than 10 seconds, so not much more to go!", keep_on_top=True, auto_close=True, auto_close_duration=10, button_type=sg.POPUP_BUTTONS_NO_BUTTONS)

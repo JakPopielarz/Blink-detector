@@ -13,6 +13,8 @@ def mock_receive():
     comm.mock = True
     comm.start_receiving()
 
+    det = detector_utils.Detector(comm.get_received(), 10)
+
     data_range = numpy.linspace(0, comm.data_max_count, num=comm.data_max_count)
     plotter = plot_utils.Plotter(x_data=data_range, y_data=comm.get_received(), \
         title="Signal strength", labels=['Sample #', 'Signal strength'], y_limits=[0, 1024], \
@@ -20,7 +22,7 @@ def mock_receive():
     plotter.draw()
     rw.add_plot(window, plotter.figure, "-CANVAS-")
     
-    rw.run_window(window, plotter, comm, mock=True)
+    rw.run_window(window, plotter, comm, det, mock=True)
 
     window.close()
     del window
@@ -58,5 +60,5 @@ def stop(window, serial_communication):
 
 
 if __name__ == "__main__":
-    # mock_receive()
-    run_app()
+    mock_receive()
+    # run_app()
