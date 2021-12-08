@@ -148,21 +148,18 @@ def check_receiving(comm, window, det):
     if comm is None:
         return
     elif comm.error_in_receiving:
-        block_inputs(window)
         comm.stop_receiving()
         comm.error_in_receiving = False
     elif not comm.receiving:
-        block_inputs(window)
         comm.start_receiving()
     else:
         check_for_blink(comm, det)
-        unblock_inputs(window)
 
-def block_inputs(window):
-    window['-CHANGE_KEY-'].update(disabled=True)
+# def block_inputs(window):
+#     window['-CHANGE_KEY-'].update(disabled=True)
 
-def unblock_inputs(window):
-    window['-CHANGE_KEY-'].update(disabled=False)
+# def unblock_inputs(window):
+#     window['-CHANGE_KEY-'].update(disabled=False)
 
 def check_for_blink(comm, det):
     if not comm.triggered and det.signals[-1] > 600:
