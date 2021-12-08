@@ -1,6 +1,7 @@
 import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import PySimpleGUI as sg
+import threading
 from  pynput.keyboard import Key, Listener
 from pynput.keyboard import Controller as KeyboardController
 from pynput.mouse import Button
@@ -16,10 +17,12 @@ mouse = MouseController()
 mouse_bind = Button.left
 
 sg.theme('DefaultNoMoreNagging')
-inputs_layout = [[sg.Text("COM port", size=15), sg.Input("COM6", key="-PORT_INPUT-", size=5, enable_events=True)],
+inputs_layout = [[sg.Text("COM port", size=10), sg.Input("COM6", key="-PORT_INPUT-", size=5, enable_events=True)],
+    [sg.Text("Threshold", size=10), sg.Input("10", key="-THRESHOLD_INPUT-", size=5, enable_events=True)],
     [sg.Text("Key to press", size=10), sg.Input("Enter", key="-CURRENT_KEY-", size=5, enable_events=True, disabled=True), sg.Button("Change key", key="-CHANGE_KEY-", size=10)],
     [sg.Radio("Key", "BIND_RADIO", key="-KEY_BIND-", default=True, enable_events=True), sg.Radio("LMB", "BIND_RADIO", key="-LMB_BIND-", default=False, enable_events=True), 
-        sg.Radio("RMB", "BIND_RADIO", key="-RMB_BIND-", default=False, enable_events=True)]]
+        sg.Radio("RMB", "BIND_RADIO", key="-RMB_BIND-", default=False, enable_events=True)],
+    [sg.Button("Calibrate", key="-CALIBRATE-"), sg.Button("Help", key="-HELP-")]]
 
 layout = [[sg.Frame("Configuration", inputs_layout, font='Helvetica 18'), sg.Canvas(key='-CANVAS-')],
     [sg.Button('Ok')]]
@@ -45,6 +48,7 @@ def run_window(window, plotter=None, comm=None, det=None, mock=False):
     configuration.load()
     apply_configuration(configuration, window, comm)
 
+    calibrate(det, plotter)
 
     while True:
         event, values = window.read(timeout=100)
@@ -55,7 +59,7 @@ def run_window(window, plotter=None, comm=None, det=None, mock=False):
  
         if det is not None:
             check_receiving(comm, window, det)
-            det.detect()
+            det.detect(len(comm.get_received_delta()))
 
         # no need to update the plotter y data, because it was inicialized as a reference to `received` array from object of Serial
         plotter.refresh_y_data()
@@ -87,6 +91,12 @@ def run_window(window, plotter=None, comm=None, det=None, mock=False):
         elif event == "-KEY_BIND-":
             bind_keyboard = True
             configuration['-bind-'] = 'KEY'
+        elif event == "-CALIBRATE-":
+            calibrate(det, plotter)
+        elif event == "-HELP-":
+            display_help()
+        elif event == "-THRESHOLD_INPUT-":
+            handle_threshold(values['-THRESHOLD_INPUT-'], window, det)
 
 def apply_configuration(configuration, window, comm):
     global mouse_bind, bind_keyboard
@@ -117,6 +127,14 @@ def apply_configuration(configuration, window, comm):
         window['-LMB_BIND-'].update(False)
         window['-RMB_BIND-'].update(False)
         window['-KEY_BIND-'].update(True)
+
+def calibrate(det, plotter):
+    sg.Popup("Please wait for the calibration to complete.\nPlease don't try to do anything in particular, just be yourself and enjoy the calibration period. It shouldn't take more than 10 seconds, so not much more to go!", keep_on_top=True, auto_close=True, auto_close_duration=10, button_type=sg.POPUP_BUTTONS_NO_BUTTONS)
+    det.calibrate()
+    update_plot_threshold(det.threshold*det.mean_std_filter+det.mean_avg_filter, plotter)
+
+def update_plot_threshold(new_val, plotter):
+    plotter.update_threshold(new_val)
 
 def check_receiving(comm, window, det):
     if comm is None:
@@ -167,3 +185,17 @@ def handle_key_bind(window, text_key):
     sg.Popup("Press the button you want to be pressed", keep_on_top=True, any_key_closes=True, button_type=sg.POPUP_BUTTONS_NO_BUTTONS)
     key_listener.stop()
 
+def display_help():
+    help_text = """Lorem Ipsum
+Dolor sit amet"""
+    sg.Popup(help_text, keep_on_top=True)
+
+def handle_threshold(new_val, window, det):
+    if new_val == '':
+        new_val = '0'
+    try:
+        new_val = int(new_val)
+    except ValueError:
+        new_val = 0
+        window['-THRESHOLD_INPUT-'].Update('')
+    det.threshold = new_val

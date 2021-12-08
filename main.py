@@ -38,12 +38,12 @@ def start():
     comm = serial_utils.Serial("COM6", 9600)
     comm.start_receiving()
 
-    det = detector_utils.Detector(comm.get_received(), 200, 4.5, 0)
+    det = detector_utils.Detector(comm.get_received(), 10)
 
     data_range = numpy.linspace(0, comm.data_max_count, num=comm.data_max_count)
     plotter = plot_utils.Plotter(x_data=data_range, y_data=comm.get_received(), \
         title="Signal strength", labels=['Sample #', 'Signal strength'], y_limits=[0, 1024])
-    # assign the detector's output as plot data points - we won't need to explicitly
+    # assign the detector's output as data points on the plot - we won't need to explicitly
     # update plotter.signal_data anymore
     plotter.signal_data = det.signals
     plotter.draw()
