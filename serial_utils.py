@@ -12,14 +12,14 @@ class Serial(serial.Serial):
         except SerialException:
             pass
 
-        self.received = [0 for _ in range(data_max_count)]
+        self.received = [-100] * data_max_count
         self.data_max_count = data_max_count
         self.receiving_thread = None
         self.receiving = False
         self.error_in_receiving = False
         self.triggered = False
         self.mock = False # For testing purposes only
-        self.points_delta = 0
+        self.count = 0
 
     def start_receiving(self):
         """
@@ -54,6 +54,7 @@ class Serial(serial.Serial):
                     received_value = self.readline()
                     # Save the contents of the serial data
                     self.__save_data(self.__decode(received_value))
+                    self.count += 1
         except SerialException:
             self.error_in_receiving = True
 
@@ -93,7 +94,6 @@ class Serial(serial.Serial):
         If length of the list is bigger than specified on init - pop first element
         """
         self.received.append(value)
-        self.points_delta += 1
 
         if len(self.received) > self.data_max_count:
             self.received.pop(0)
@@ -108,6 +108,8 @@ class Serial(serial.Serial):
         return self.received
 
     def get_received_delta(self):
-        points_count = self.points_delta
-        self.points_delta = 0
+        points_count = self.count
+        self.count = 0
+        if points_count == 0:
+            return []
         return self.received[-points_count:]

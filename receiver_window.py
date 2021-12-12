@@ -1,3 +1,5 @@
+import threading
+import time
 import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import PySimpleGUI as sg
@@ -47,7 +49,7 @@ def run_window(window, plotter=None, comm=None, det=None, mock=False):
     configuration.load()
     apply_configuration(configuration, window, comm, det)
 
-    calibrate(det, plotter)
+    calibrate(det, plotter, comm)
 
     while True:
         event, values = window.read(timeout=100)
@@ -57,7 +59,7 @@ def run_window(window, plotter=None, comm=None, det=None, mock=False):
             return
  
         if det is not None:
-            check_receiving(comm, window, det)
+            check_receiving(comm, det)
             det.detect(len(comm.get_received_delta()))
 
         # no need to update the plotter y data, because it was inicialized as a reference to `received` array from object of Serial
@@ -91,7 +93,7 @@ def run_window(window, plotter=None, comm=None, det=None, mock=False):
             bind_keyboard = True
             configuration['-bind-'] = 'KEY'
         elif event == "-CALIBRATE-":
-            calibrate(det, plotter)
+            calibrate(det, plotter, comm)
         elif event == "-HELP-":
             display_help()
         elif event == "-THRESHOLD_INPUT-":
@@ -136,15 +138,25 @@ def apply_configuration(configuration, window, comm, det):
 
     configuration['-first-'] = "False"
 
-def calibrate(det, plotter):
-    sg.Popup("Please wait for the calibration to complete.\nPlease don't try to do anything in particular, just be yourself and enjoy the calibration period. It shouldn't take more than 10 seconds, so not much more to go!", keep_on_top=True, auto_close=True, auto_close_duration=10, button_type=sg.POPUP_BUTTONS_NO_BUTTONS)
+def calibrate(det, plotter, comm):
+    det.calibrating = True
+    # the coma in args tuple for threading.Thread is necessary for it to be treated as tuple, not a string, and properly passing the argument to target method
+    calibration_thread = threading.Thread(target=det.gather_calibration_data, args=(comm.get_received_delta,))
+    calibration_thread.start()
+
+    sg.Popup("Please wait for the calibration to complete.\nPlease don't try to do anything in particular, just be yourself and enjoy the calibration period. It shouldn't take more than 10 seconds, so not much more to go!", auto_close=True, auto_close_duration=10, button_type=sg.POPUP_BUTTONS_NO_BUTTONS)
+
+    det.calibrating = False
+    calibration_thread.join()
+    
     det.calibrate()
-    update_plot_threshold(det.threshold*det.mean_std_filter+det.mean_avg_filter, plotter)
+
+    update_plot_threshold(det.border, plotter)
 
 def update_plot_threshold(new_val, plotter):
     plotter.update_threshold(new_val)
 
-def check_receiving(comm, window, det):
+def check_receiving(comm, det):
     if comm is None:
         return
     elif comm.error_in_receiving:
@@ -154,12 +166,6 @@ def check_receiving(comm, window, det):
         comm.start_receiving()
     else:
         check_for_blink(comm, det)
-
-# def block_inputs(window):
-#     window['-CHANGE_KEY-'].update(disabled=True)
-
-# def unblock_inputs(window):
-#     window['-CHANGE_KEY-'].update(disabled=False)
 
 def check_for_blink(comm, det):
     if not comm.triggered and det.signals[-1] > 600:
@@ -184,7 +190,6 @@ def handle_key_bind(window, text_key):
             text_val = text_val[1:-1]
         window[text_key].update(text_val)
 
-    # block_inputs(window)
     key_listener = Listener(on_release=__rebind)
     key_listener.start()
     sg.Popup("Press the button you want to be pressed", keep_on_top=True, any_key_closes=True, button_type=sg.POPUP_BUTTONS_NO_BUTTONS)

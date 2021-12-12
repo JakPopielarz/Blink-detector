@@ -13,11 +13,23 @@ class Detector():
         self.mean_avg_filter = np.mean(self.filtered_y)
         self.mean_std_filter = np.std(self.filtered_y)
 
+        self.calibration_y = []
+        self.calibrating = False
+        self.border = -100
+
+    def gather_calibration_data(self, gathering_method):
+        while self.calibrating:
+            gathered_data = gathering_method()
+            gathered_data = list(filter(lambda x: (x >= 0), gathered_data))
+            self.calibration_y += gathered_data
+    
     def calibrate(self):
-        self.filtered_y = np.array(self.y)
+        self.filtered_y = np.array(self.calibration_y)
         
         self.mean_avg_filter = np.mean(self.filtered_y)
         self.mean_std_filter = np.std(self.filtered_y)
+
+        self.border = self.threshold*self.mean_std_filter+self.mean_avg_filter
 
     def detect(self, number_of_new_points):
         self.signals += [0] * number_of_new_points
