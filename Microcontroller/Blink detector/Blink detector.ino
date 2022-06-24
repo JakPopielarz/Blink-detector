@@ -1,10 +1,25 @@
+#include <math.h>
+
 #define VALUE_ARRAY_SIZE 100
 
+// Pin / device variables
 int sensorPin = A0;
 int sensorValue = 0;
 int ledPin = 3;
+
+// Data array variables
 int values[VALUE_ARRAY_SIZE]; 
 int lastFilledIndex = 0;
+
+// Signal analysis algorithm variables
+double average = 0.0;
+double threshold = 0.0;
+double mean_avg_filter = 0.0;
+double mean_std_filter = 0.0;
+
+/////////////////////////////////////////////////////////////////////////////////
+//                ARRAY FUNCTIONS
+/////////////////////////////////////////////////////////////////////////////////
 
 /*
 Setup array of values - set every element to -1,
@@ -46,6 +61,39 @@ void serialPrintArray(int array[], int size) {
    }
    Serial.println("]");
 }
+
+/////////////////////////////////////////////////////////////////////////////////
+//                SIGNAL ANALYSIS FUNCTIONS
+/////////////////////////////////////////////////////////////////////////////////
+
+/*
+Calculate mean (average) of int array
+*/
+double mean(int array[], int size) {
+   double sum = 0.0;
+
+   for (int i=0; i<size; i++) {
+      sum += array[i];
+   }
+
+   return sum / size;
+}
+/*
+Calculate standard deviation of int array
+*/
+double std(int array[], int size, double mean) {
+   double sum = 0.0;
+
+   for (int i=0; i<size; i++) {
+      sum += square(array[i] - mean);
+   }
+
+   return sum / size;
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+//                CONTROL FUNCTIONS
+/////////////////////////////////////////////////////////////////////////////////
 
 void setup(void) {
    setupValueArray(values);
