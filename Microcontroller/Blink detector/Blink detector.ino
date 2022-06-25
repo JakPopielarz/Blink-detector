@@ -9,16 +9,16 @@ int ledPin = 3;
 
 // Raw data array variables
 int values[VALUE_ARRAY_SIZE]; 
-int lastFilledValueIndex = 0;
+int lastFilledValueIndex = -1;
 
 // Signal analysis algorithm variables
 double average = 0.0;
-double threshold = 0.0;
+double threshold = 10.0;
 double mean_avg_filter = 0.0;
 double mean_std_filter = 0.0;
 
 // Analysis data array variables
-bool signals[VALUE_ARRAY_SIZE];
+int signals[VALUE_ARRAY_SIZE];
 int numberOfNewPoints = 0;
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -31,7 +31,7 @@ which indicates it hasn't been used yet.
 */
 void setupArray(int array[], int initValue) {
    for (int i=0; i<VALUE_ARRAY_SIZE; i++) {
-      array[i] = -1;
+      array[i] = initValue;
    }
 }
 
@@ -40,11 +40,12 @@ Save a value to the array - if there are still elements previously not used
 override them; if the array is already full - shift elements to the left and
 insert new one on the end.
 */
-void appendToSizeLimited(int array[], int size, int value, int lastFilledIndex) {
-   if (lastFilledIndex < size) {
-      int index = lastFilledIndex + 1;
+void appendToSizeLimited(int array[], int size, int value, bool incrementCount=true) {
+   if (lastFilledValueIndex < size-1) {
+      int index = lastFilledValueIndex + 1;
       array[index] = value;
-      lastFilledIndex++;
+      if (incrementCount)
+         lastFilledValueIndex++;
    } else {
       for (int i=0; i<size-1; i++) {
          array[i] = array[i+1];
@@ -57,7 +58,7 @@ void appendToSizeLimited(int array[], int size, int value, int lastFilledIndex) 
 Save a raw detector value to the array - taking care of size limitations
 */
 void saveValue(int valueArray[], int value) {
-   appendToSizeLimited(valueArray, VALUE_ARRAY_SIZE, value, lastFilledValueIndex);
+   appendToSizeLimited(valueArray, VALUE_ARRAY_SIZE, value);
    numberOfNewPoints ++;
 }
 
@@ -81,7 +82,7 @@ void serialPrintArray(int array[], int size) {
 /*
 Calculate mean (average) of int array
 */
-double mean(int array[], int size) {
+double calculateMean(int array[], int size) {
    double sum = 0.0;
 
    for (int i=0; i<size; i++) {
@@ -93,7 +94,7 @@ double mean(int array[], int size) {
 /*
 Calculate standard deviation of int array
 */
-double std(int array[], int size, double mean) {
+double calculateStd(int array[], int size, double mean) {
    double sum = 0.0;
 
    for (int i=0; i<size; i++) {
@@ -110,10 +111,10 @@ bool checkDatum(int datum, double mean, double std) {
    if (abs(datum - mean) > (threshold * std)) {
    // if point value exceeds the border value ("upwards")
       if (datum > mean) {
-         return true;
+         return 1;
       }
    } else {
-      return false;
+      return 0;
    }
 }
 
@@ -121,8 +122,8 @@ bool checkDatum(int datum, double mean, double std) {
 Analyse raw detector values, WITHOUT pre-calculated mean and standard deviation
 */
 void detect(int array[], int size) {
-   double mean = mean(array, size);
-   double std = std(array, size, mean);
+   double mean = calculateMean(array, size);
+   double std = calculateStd(array, size, mean);
 
    detect(array, size, mean, std);
 }
@@ -131,12 +132,12 @@ void detect(int array[], int size) {
 Analyse raw detector values, WITH pre-calculated mean and standard deviation
 */
 void detect(int array[], int size, double mean, double std) {
-   bool result = false;
+   threshold = threshold * std + mean; // TODO: CHECK IF THRESHOLD CALCULATION WORKS
    // there's no need to iterate through the whole data point array - the old points have been checked already
    // therefore iterate only through the part with new points (added since last analysis)
    for (int i=size-numberOfNewPoints; i<size; i++) {
-      result = checkDatum(array[i], mean, std);
-      appendToSizeLimited(signals, VALUE_ARRAY_SIZE, result, lastFilledValueIndex);
+      int = result = checkDatum(array[i], mean, std);
+      appendToSizeLimited(signals, VALUE_ARRAY_SIZE, result, false);
    }
    // checked all new points, so clear the counter
    numberOfNewPoints = 0;
@@ -162,8 +163,20 @@ void loop(void) {
    // digitalWrite(ledPin, HIGH);
    delay(2);
    sensorValue = analogRead(sensorPin);
+   Serial.print("Sensor value: ");
+   Serial.println(sensorValue);
+   
    saveValue(values, sensorValue);
-   serialPrintArray(values, VALUE_ARRAY_SIZE);
+   // serialPrintArray(values, VALUE_ARRAY_SIZE);
+   detect(values, VALUE_ARRAY_SIZE);
+   Serial.print("Threshold: ");
+   Serial.print(threshold);
+   Serial.print(" || result: ");
+   Serial.println(signals[lastFilledValueIndex]);
+   
+   Serial.print("Signals: ");
+   serialPrintArray(signals, VALUE_ARRAY_SIZE);
+
    delay(1);
    // digitalWrite(ledPin, LOW);
    delay(7);
