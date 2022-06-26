@@ -1,6 +1,6 @@
 #include <math.h>
 
-#define VALUE_ARRAY_SIZE 100
+#define VALUE_ARRAY_SIZE 10
 
 // Pin / device variables
 int sensorPin = A0;
@@ -136,7 +136,7 @@ void detect(int array[], int size, double mean, double std) {
    // there's no need to iterate through the whole data point array - the old points have been checked already
    // therefore iterate only through the part with new points (added since last analysis)
    for (int i=size-numberOfNewPoints; i<size; i++) {
-      int = result = checkDatum(array[i], mean, std);
+      int result = checkDatum(array[i], mean, std);
       appendToSizeLimited(signals, VALUE_ARRAY_SIZE, result, false);
    }
    // checked all new points, so clear the counter
@@ -177,7 +177,7 @@ void loop(void) {
    Serial.print("Signals: ");
    serialPrintArray(signals, VALUE_ARRAY_SIZE);
 
-   delay(1);
+   delay(1000);
    // digitalWrite(ledPin, LOW);
    delay(7);
 }
