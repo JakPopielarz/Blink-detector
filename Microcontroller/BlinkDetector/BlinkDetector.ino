@@ -20,6 +20,20 @@ double threshold = 200.0;
 int signals[VALUE_ARRAY_SIZE];
 int numberOfNewPoints = 0;
 
+/*
+Print out an array in one line:
+[x0, x1, x2, x3, x4, ]
+
+Using Arduino-Specific includes / methods, therefore defined in the .ino file
+*/
+void serialPrintArray(int array[], int size) {
+   Serial.print("[");
+   for (int i=0; i<size; i++) {
+      Serial.print(array[i]);
+      Serial.print(", ");
+   }
+   Serial.println("]");
+}
 
 void setup(void) {
    setupArray(values, VALUE_ARRAY_SIZE, -1);

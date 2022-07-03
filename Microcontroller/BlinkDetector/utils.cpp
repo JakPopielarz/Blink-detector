@@ -1,5 +1,4 @@
 #include "utils.h"
-#include <HardwareSerial.h>
 #include <math.h>
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -35,18 +34,6 @@ void appendToSizeLimited(int array[], int size, int value, int* lastFilledIndex,
    }
 }
 
-/*
-Print out an array in one line:
-[x0, x1, x2, x3, x4, ]
-*/
-void serialPrintArray(int array[], int size) {
-   Serial.print("[");
-   for (int i=0; i<size; i++) {
-      Serial.print(array[i]);
-      Serial.print(", ");
-   }
-   Serial.println("]");
-}
 
 /////////////////////////////////////////////////////////////////////////////////
 //                SIGNAL ANALYSIS FUNCTIONS
@@ -69,12 +56,11 @@ Calculate standard deviation of int array
 */
 double calculateStd(int array[], int size, double mean) {
    double sum = 0.0;
-
+   
    for (int i=0; i<size; i++) {
-      sum += square(array[i] - mean);
+      sum += pow((array[i] - mean), 2);
    }
-
-   return sum / size;
+   return sqrt(sum / size);
 }
 
 /*
