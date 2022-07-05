@@ -1,5 +1,6 @@
 #include "utils.h"
 #include <math.h>
+#include <iostream>
 
 /////////////////////////////////////////////////////////////////////////////////
 //                ARRAY FUNCTIONS
@@ -39,6 +40,14 @@ void appendToSizeLimited(int array[], int size, int value, int* lastFilledIndex,
 //                SIGNAL ANALYSIS FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////////
 
+// Helper function to help compare two doubles with a given precision.
+// It will not be exact in some cases due to floating point number
+// representation, but eh - good enough for my purposes.
+bool compare(double value1, double value2, int precision) {
+    std::cout << "Value 1: " << value1 << "; Value 2: " << value2 << "\n"; 
+    return std::abs(value1 - value2) < std::pow(10, -precision);
+}
+
 /*
 Calculate mean (average) of int array
 */
@@ -64,18 +73,24 @@ double calculateStd(int array[], int size, double mean) {
 }
 
 /*
-Calculate if single point is a peak
+Calculate if single point is a peak:
+Check if the point's value is inside the interval:
+( mean - (std*stdMultiple); mean + (std*stdMultiple) )
+If it is - check if the point's value is higher than mean
+   If it is - it's a "top" peak - on plot would look like: /\
+      Then return 1
+   Else - it's a "bottop" peak - on plot would look like: \/
+   The "Else" case doesn't interest us, so it has been ommited.
+In all other cases return 0
 */
-int checkDatum(int datum, double mean, double std, int thresholdValue) {
-//   if (abs(datum - mean) > (thresholdValue * std)) {
-  if (datum > thresholdValue) {
+int checkDatum(int datum, double mean, double std, int stdMultiple) {
+  if ((datum - mean) > (stdMultiple * std)) {
    // if point value exceeds the border value ("upwards")
-      // if (datum > mean) {
+      if (datum > mean) {
          return 1;
-   //   }
-   } else {
-      return 0;
+     }
    }
+   return 0;
 }
 
 /*
