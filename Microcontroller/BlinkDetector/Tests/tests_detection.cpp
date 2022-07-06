@@ -14,7 +14,7 @@ TEST_CASE("Data point is compared to given values: 100, 10, 35, 11, 24, 3, 34, 1
     REQUIRE(compare(mean, 26.727, 3));
     REQUIRE(compare(std, 25.377, 3));
 
-    int valueStdMultiple = 2;
+    double valueStdMultiple = 2;
 
     SECTION("Checking 100 returns 1") {
         REQUIRE(checkDatum(array[0], mean, std, valueStdMultiple) == 1);

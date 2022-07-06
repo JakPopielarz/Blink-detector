@@ -7,8 +7,8 @@ void serialPrintArray(int array[], int size);
 bool compare(double value1, double value2, int precision);
 double calculateMean(int array[], int size);
 double calculateStd(int array[], int size, double mean);
-int checkDatum(int datum, double mean, double std, int thresholdValue);
-void detect(int array[], int size, int thresholdValue, int signals[], int* newPointCount, int* lastFilledIndex);
-void detect(int array[], int size, double mean, double std, int thresholdValue, int signals[], int* newPointCount, int* lastFilledIndex);
+int checkDatum(int datum, double mean, double std, double stdMultiple);
+void detect(int array[], int size, double stdMultiple, int signals[], int* newPointCount, int* lastFilledIndex);
+void detect(int array[], int size, double mean, double std, double stdMultiple, int signals[], int* newPointCount, int* lastFilledIndex);
 
 #endif

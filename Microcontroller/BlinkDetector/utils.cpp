@@ -76,14 +76,17 @@ double calculateStd(int array[], int size, double mean) {
 Calculate if single point is a peak:
 Check if the point's value is inside the interval:
 ( mean - (std*stdMultiple); mean + (std*stdMultiple) )
-If it is - check if the point's value is higher than mean
-   If it is - it's a "top" peak - on plot would look like: /\
+
+On a plot that interval would look like a "band".
+
+If the value is outside of the band - check if the point's value is higher than mean
+   If it is - it's outside the "top" of the band
       Then return 1
-   Else - it's a "bottop" peak - on plot would look like: \/
+   Else - it's outside the "bottom" of the band
    The "Else" case doesn't interest us, so it has been ommited.
 In all other cases return 0
 */
-int checkDatum(int datum, double mean, double std, int stdMultiple) {
+int checkDatum(int datum, double mean, double std, double stdMultiple) {
   if ((datum - mean) > (stdMultiple * std)) {
    // if point value exceeds the border value ("upwards")
       if (datum > mean) {
@@ -96,22 +99,22 @@ int checkDatum(int datum, double mean, double std, int stdMultiple) {
 /*
 Analyse raw detector values, WITHOUT pre-calculated mean and standard deviation
 */
-void detect(int array[], int size, int thresholdValue, int signals[], int* newPointCount, int* lastFilledIndex) {
+void detect(int array[], int size, double stdMultiple, int signals[], int* newPointCount, int* lastFilledIndex) {
    double mean = calculateMean(array, size);
    double std = calculateStd(array, size, mean);
 
-   detect(array, size, mean, std, thresholdValue, signals, newPointCount, lastFilledIndex);
+   detect(array, size, mean, std, stdMultiple, signals, newPointCount, lastFilledIndex);
 }
 
 /*
 Analyse raw detector values, WITH pre-calculated mean and standard deviation
 */
-void detect(int array[], int size, double mean, double std, int thresholdValue, int signals[], int* newPointCount, int* lastFilledIndex) {
+void detect(int array[], int size, double mean, double std, double stdMultiple, int signals[], int* newPointCount, int* lastFilledIndex) {
     // threshold = baseThreshold * std + mean; // TODO: CHECK IF THRESHOLD CALCULATION WORKS - something's not right, standard deviation / mean calculation?
    // there's no need to iterate through the whole data point array - the old points have been checked already
    // therefore iterate only through the part with new points (added since last analysis)
    for (int i=size-*newPointCount; i<size; i++) {
-      int result = checkDatum(array[i], mean, std, thresholdValue);
+      int result = checkDatum(array[i], mean, std, stdMultiple);
       appendToSizeLimited(signals, size, result, lastFilledIndex, false);
    }
    // checked all new points, so clear the counter
