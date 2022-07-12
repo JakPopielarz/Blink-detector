@@ -44,8 +44,8 @@ void appendToSizeLimited(int array[], int size, int value, int* lastFilledIndex,
 // It will not be exact in some cases due to floating point number
 // representation, but eh - good enough for my purposes.
 bool compare(double value1, double value2, int precision) {
-    std::cout << "Value 1: " << value1 << "; Value 2: " << value2 << "\n"; 
-    return std::abs(value1 - value2) < std::pow(10, -precision);
+   // std::cout << "Value 1: " << value1 << "; Value 2: " << value2 << "\n"; 
+   return std::abs(value1 - value2) < std::pow(10, -precision);
 }
 
 /*
@@ -63,7 +63,7 @@ double calculateMean(int array[], int size) {
 /*
 Calculate standard deviation of int array
 */
-double calculateStd(int array[], int size, double mean) {
+double calculateStandardDeviation(int array[], int size, double mean) {
    double sum = 0.0;
    
    for (int i=0; i<size; i++) {
@@ -75,7 +75,7 @@ double calculateStd(int array[], int size, double mean) {
 /*
 Calculate if single point is a peak:
 Check if the point's value is inside the interval:
-( mean - (std*stdMultiple); mean + (std*stdMultiple) )
+( mean - (standardDeviation*standardDeviationMultiple); mean + (standardDeviation*standardDeviationMultiple) )
 
 On a plot that interval would look like a "band".
 
@@ -86,8 +86,8 @@ If the value is outside of the band - check if the point's value is higher than 
    The "Else" case doesn't interest us, so it has been ommited.
 In all other cases return 0
 */
-int checkDatum(int datum, double mean, double std, double stdMultiple) {
-  if ((datum - mean) > (stdMultiple * std)) {
+int checkDatum(int datum, double mean, double standardDeviation, double standardDeviationMultiple) {
+  if ((datum - mean) > (standardDeviationMultiple * standardDeviation)) {
    // if point value exceeds the border value ("upwards")
       if (datum > mean) {
          return 1;
@@ -99,23 +99,23 @@ int checkDatum(int datum, double mean, double std, double stdMultiple) {
 /*
 Analyse raw detector values, WITHOUT pre-calculated mean and standard deviation
 */
-void detect(int array[], int size, double stdMultiple, int signals[], int* newPointCount, int* lastFilledIndex) {
+void detect(int array[], int size, double standardDeviationMultiple, int signals[], int* newPointCount, int* lastFilledIndex, bool incrementCount=false) {
    double mean = calculateMean(array, size);
-   double std = calculateStd(array, size, mean);
+   double standardDeviation = calculateStandardDeviation(array, size, mean);
 
-   detect(array, size, mean, std, stdMultiple, signals, newPointCount, lastFilledIndex);
+   detect(array, size, mean, standardDeviation, standardDeviationMultiple, signals, newPointCount, lastFilledIndex, incrementCount);
 }
 
 /*
 Analyse raw detector values, WITH pre-calculated mean and standard deviation
 */
-void detect(int array[], int size, double mean, double std, double stdMultiple, int signals[], int* newPointCount, int* lastFilledIndex) {
-    // threshold = baseThreshold * std + mean; // TODO: CHECK IF THRESHOLD CALCULATION WORKS - something's not right, standard deviation / mean calculation?
+void detect(int array[], int size, double mean, double standardDeviation, double standardDeviationMultiple, int signals[], int* newPointCount, int* lastFilledIndex, bool incrementCount=false) {
+    // threshold = baseThreshold * standardDeviation + mean; // TODO: CHECK IF THRESHOLD CALCULATION WORKS - something's not right, standard deviation / mean calculation?
    // there's no need to iterate through the whole data point array - the old points have been checked already
    // therefore iterate only through the part with new points (added since last analysis)
    for (int i=size-*newPointCount; i<size; i++) {
-      int result = checkDatum(array[i], mean, std, stdMultiple);
-      appendToSizeLimited(signals, size, result, lastFilledIndex, false);
+      int result = checkDatum(array[i], mean, standardDeviation, standardDeviationMultiple);
+      appendToSizeLimited(signals, size, result, lastFilledIndex, incrementCount);
    }
    // checked all new points, so clear the counter
    *newPointCount = 0;
