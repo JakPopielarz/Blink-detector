@@ -106,7 +106,7 @@ void detect(DataContainer* data, double mean, double standardDeviation, double s
     // there's no need to iterate through the whole data point array - the old points have been checked already
     // therefore iterate only through the part with new points (added since last analysis)
     int size = data->getMaxLimit();
-    for (int t=size-data->getNewElementCount(); i<size; i++) {
+    for (int i=size-data->getNewElementCount(); i<size; i++) {
         int result = checkDatum(data->data[i], mean, standardDeviation, standardDeviationMultiple);
         signals->appendToData(result);
     }

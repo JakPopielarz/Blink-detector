@@ -31,7 +31,7 @@ bool compare(double value1, double value2, int precision);
 double calculateMean(int array[], int size);
 double calculateStandardDeviation(int array[], int size, double mean);
 int checkDatum(int datum, double mean, double standardDeviation, double standardDeviationMultiple);
-void detect(DataContainer* data, double standardDeviationMultiple, DataContainer* signals) 
+void detect(DataContainer* data, double standardDeviationMultiple, DataContainer* signals) ;
 void detect(DataContainer* data, double mean, double standardDeviation, double standardDeviationMultiple, DataContainer* signals);
 
 #endif
