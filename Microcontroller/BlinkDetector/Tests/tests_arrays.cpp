@@ -6,64 +6,58 @@
 // CATCH2 DOCUMENTATION / TUTORIAL: https://github.com/catchorg/Catch2/blob/v2.x/docs/tutorial.md
 
 
-TEST_CASE("Array is initialized with given values", "[setupArray]") {
-    int array[20];
-    int size = 20;
-    
+TEST_CASE("Array is initialized with given values", "[DataContainer]") {
+
     SECTION("Initializing with -1") {
         int value = -1;
 
-        setupArray(array, size, value);
-        for (int i=0; i<size; i++) {
-            REQUIRE(array[i] == value);
+        DataContainer container(value);
+        for (int i=0; i<container.getMaxLimit(); i++) {
+            REQUIRE(container.data[i] == value);
         }
     }
     
     SECTION("Initializing with 1") {
         int value = 1;
 
-        setupArray(array, size, value);
-        for (int i=0; i<size; i++) {
-            REQUIRE(array[i] == value);
+        DataContainer container(value);
+        for (int i=0; i<container.getMaxLimit(); i++) {
+            REQUIRE(container.data[i] == value);
         }
     }
 }
 
-// void appendToSizeLimited(int array[], int size, int value, int* lastFilledIndex, bool incrementCount);
 
-TEST_CASE("Value is added to the array", "[appendToSizeLimited]") {
-    int array[10];
-    int size = 10;
-    int lastFilledIndex = -1;
+TEST_CASE("Value is added to the array", "[appendToData]") {
     
     SECTION("Appending, with increment true") {
-        for (int i=0; i<size; i++) {
-            appendToSizeLimited(array, size, i, &lastFilledIndex, true);
+        DataContainer container(0);
+
+        for (int i=0; i<container.getMaxLimit(); i++) {
+            container.appendToData(i);
         }
 
-        appendToSizeLimited(array, size, size, &lastFilledIndex, true);
+        container.appendToData(container.getMaxLimit());
 
-        for (int i=0; i<size; i++) {
-            REQUIRE(array[i] == i+1);
+        for (int i=0; i<container.getMaxLimit(); i++) {
+            REQUIRE(container.data[i] == i+1);
         }
     }
     
     SECTION("Appending, with increment false") {
-        // setting the array values to 0, to make sure there's no memory garbage in the way
-        for (int i=0; i<size; i++) {
-            array[i] = 0;
+        DataContainer container(0);
+        container.setIncrementFlag(false);
+
+        for (int i=0; i<container.getMaxLimit(); i++) {
+            container.appendToData(i);
         }
 
-        for (int i=0; i<size; i++) {
-            appendToSizeLimited(array, size, i, &lastFilledIndex, false);
-        }
+        container.appendToData(container.getMaxLimit()+1);
 
-        appendToSizeLimited(array, size, size+1, &lastFilledIndex, false);
+        REQUIRE(container.data[0] == container.getMaxLimit()+1);
 
-        REQUIRE(array[0] == size+1);
-
-        for (int i=1; i<size; i++) {
-            REQUIRE(array[i] == 0);
+        for (int i=1; i<container.getMaxLimit(); i++) {
+            REQUIRE(container.data[i] == 0);
         }
     }
 }
