@@ -104,13 +104,13 @@ Analyse raw detector values, WITH pre-calculated mean and standard deviation
 */
 void detect(DataContainer* data, double mean, double standardDeviation, double standardDeviationMultiple, DataContainer* signals) {
     // there's no need to iterate through the whole data point array - the old points have been checked already
-    // therefore iterate only through the part with new points (added since last analysis)
+    // therefore iterate only through the part with new points (added since last analysis).
+    // for now and for simplicity - iterating through all points
     int size = data->getMaxLimit();
-    for (int i=size-data->getNewElementCount(); i<size; i++) {
+    for (int i=0; i<size; i++) {
         int result = checkDatum(data->data[i], mean, standardDeviation, standardDeviationMultiple);
         signals->appendToData(result);
     }
-    data->setNewElementCount(0);
 }
 // void detect(int array[], int size, double mean, double standardDeviation, double standardDeviationMultiple, int signals[], int* newPointCount, int* lastFilledIndex, bool incrementCount=false) {
 //     // threshold = baseThreshold * standardDeviation + mean;

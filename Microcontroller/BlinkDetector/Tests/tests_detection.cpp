@@ -35,19 +35,33 @@ TEST_CASE("Array is properly analyzed (without precalculated mean and standard d
 
     double standardDeviationMultiple = 2;
 
-    int signals[11] = {-1};
+    DataContainer signals = DataContainer(-1);;
+    DataContainer data = DataContainer(0);
+
+    int j = 1;
+    for (int i=0; i<data.getMaxLimit(); i++) {
+        if (j >= arraySize)
+            j = 1;
+
+        if (i < arraySize) {
+            data.data[i] = array[i];
+        } else {
+            data.data[i] = array[j];
+            j ++;
+        }
+    }
 
     // passing true as the last argument, because otherwise lastFilledIndex will not be incremented - all values saved
     // in the same place in the signals array
-    detect(array, arraySize, standardDeviationMultiple, signals, &newPoints, &lastFilledIndex, true);
+    detect(&data, standardDeviationMultiple, &signals);
 
     SECTION("First detection result is 1") {
-        REQUIRE(signals[0] == 1);
+        REQUIRE(signals.data[0] == 1);
     }
 
     SECTION("Other detection results are 0") {
-        for (int i=1; i<arraySize; i++) {
-            REQUIRE(signals[i] == 0);
+        for (int i=1; i<signals.getMaxLimit(); i++) {
+            REQUIRE(signals.data[i] == 0);
         }
     }
 }
@@ -55,33 +69,45 @@ TEST_CASE("Array is properly analyzed (without precalculated mean and standard d
 TEST_CASE("Array is properly analyzed (with precalculated mean and standard deviation)Array [100, 10, 35, 11, 24, 3, 34, 11, 23, 12, 31] results with [1, 0 ... 0]\n", "[detect][precalculated]") {
     int array[] = {100, 10, 35, 11, 24, 3, 34, 11, 23, 12, 31};
     int arraySize = 11;
-    int newPoints = 11;
-    int lastFilledIndex = -1;
+
+    double standardDeviationMultiple = 2;
+
+    DataContainer signals = DataContainer(-1);;
+    DataContainer data = DataContainer(0);
+
+    int j = 1;
+    for (int i=0; i<data.getMaxLimit(); i++) {
+        if (j >= arraySize)
+            j = 1;
+
+        if (i < arraySize) {
+            data.data[i] = array[i];
+        } else {
+            data.data[i] = array[j];
+            j ++;
+        }
+    }
 
     // using functions from utils, because they are tested in other file
-    double mean = calculateMean(array, arraySize);
-    double standardDeviation = calculateStandardDeviation(array, arraySize, mean);
+    double mean = calculateMean(data.data, arraySize);
+    double standardDeviation = calculateStandardDeviation(data.data, arraySize, mean);
 
     // making sure the values are correct
     REQUIRE(compare(mean, 26.727, 3));
     REQUIRE(compare(standardDeviation, 25.377, 3));
 
-    double standardDeviationMultiple = 2;
-
-    int signals[11] = {-1};
-
     // passing true as the last argument, because otherwise lastFilledIndex will not be incremented - all values saved
     // in the same place in the signals array
-    detect(array, arraySize, mean, standardDeviation, standardDeviationMultiple, signals, &newPoints, &lastFilledIndex, true);
+    detect(&data, mean, standardDeviation, standardDeviationMultiple, &signals);
 
     SECTION("First detection result is 1") {
-        REQUIRE(checkDatum(array[0], mean, standardDeviation, standardDeviationMultiple) == 1);
-        REQUIRE(signals[0] == 1);
+        REQUIRE(checkDatum(data.data[0], mean, standardDeviation, standardDeviationMultiple) == 1);
+        REQUIRE(signals.data[0] == 1);
     }
 
     SECTION("Other detection results are 0") {
-        for (int i=1; i<arraySize; i++) {
-            REQUIRE(signals[i] == 0);
+        for (int i=1; i<signals.getMaxLimit(); i++) {
+            REQUIRE(signals.data[i] == 0);
         }
     }
 }

@@ -7,7 +7,6 @@ class DataContainer {
 
         int lastFilledIndex = -1;
         bool incrementCount = true;
-        int newElementCount = 0;
     public:
         int data[maxLimit];
         DataContainer(int initValue);
@@ -21,10 +20,6 @@ class DataContainer {
         int getLastFilledIndex() { return lastFilledIndex; }
 
         int getMaxLimit() { return maxLimit; }
-        
-        void setNewElementCount(int value) { newElementCount = value; }
-        bool getNewElementCount() { return newElementCount; }
-        void incrementNewElementCount() { newElementCount++; }
 };
 
 bool compare(double value1, double value2, int precision);
