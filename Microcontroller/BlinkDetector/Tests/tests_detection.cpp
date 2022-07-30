@@ -72,7 +72,7 @@ TEST_CASE("Array is properly analyzed (with precalculated mean and standard devi
 
     double standardDeviationMultiple = 2;
 
-    DataContainer signals = DataContainer(-1);;
+    DataContainer signals = DataContainer(-1);
     DataContainer data = DataContainer(0);
 
     int j = 1;

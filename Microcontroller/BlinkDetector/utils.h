@@ -1,9 +1,8 @@
 #ifndef UTILS_H
 #define UTILS_H
-
 class DataContainer {
     private:
-        enum { maxLimit = 50 };
+        enum { maxLimit = 20 };
 
         int lastFilledIndex = -1;
         bool incrementCount = true;

@@ -1,6 +1,6 @@
 #include "utils.h"
 #include <math.h>
-#include <iostream>
+//#include <iostream>
 
 DataContainer::DataContainer(int initValue) {
     for (int i=0; i<maxLimit; i++) {
@@ -32,7 +32,7 @@ void DataContainer::appendToData(int value) {
 // representation, but eh - good enough for my purposes.
 bool compare(double value1, double value2, int precision) {
     // std::cout << "Value 1: " << value1 << "; Value 2: " << value2 << "\n"; 
-    return std::abs(value1 - value2) < std::pow(10, -precision);
+    return fabs(value1 - value2) < pow(10, -precision);
 }
 
 /*
@@ -92,12 +92,6 @@ void detect(DataContainer* data, double standardDeviationMultiple, DataContainer
 
     detect(data, mean, standardDeviation, standardDeviationMultiple, signals);
 }
-// void detect(int array[], int size, double standardDeviationMultiple, int signals[], int* newPointCount, int* lastFilledIndex, bool incrementCount=false) {
-//     double mean = calculateMean(array, size);
-//     double standardDeviation = calculateStandardDeviation(array, size, mean);
-
-//     detect(array, size, mean, standardDeviation, standardDeviationMultiple, signals, newPointCount, lastFilledIndex, incrementCount);
-// }
 
 /*
 Analyse raw detector values, WITH pre-calculated mean and standard deviation
@@ -112,14 +106,3 @@ void detect(DataContainer* data, double mean, double standardDeviation, double s
         signals->appendToData(result);
     }
 }
-// void detect(int array[], int size, double mean, double standardDeviation, double standardDeviationMultiple, int signals[], int* newPointCount, int* lastFilledIndex, bool incrementCount=false) {
-//     // threshold = baseThreshold * standardDeviation + mean;
-//     // there's no need to iterate through the whole data point array - the old points have been checked already
-//     // therefore iterate only through the part with new points (added since last analysis)
-//     for (int i=size-*newPointCount; i<size; i++) {
-//         int result = checkDatum(array[i], mean, standardDeviation, standardDeviationMultiple);
-//         appendToData(signals, size, result, lastFilledIndex, incrementCount);
-//     }
-//     // checked all new points, so clear the counter
-//     *newPointCount = 0;
-// }
