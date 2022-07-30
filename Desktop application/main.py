@@ -1,6 +1,5 @@
 import numpy
 
-import detector_utils
 import serial_utils
 import plot_utils
 import receiver_window as rw
@@ -23,9 +22,6 @@ def start_mock():
     comm.mock = True
     comm.start_receiving()
 
-    # initiate signal analyzer
-    det = detector_utils.Detector(comm.get_received(), 10)
-
     # prepare range of x axis
     data_range = numpy.linspace(0, comm.data_max_count, num=comm.data_max_count)
     # initiate the plotting tool, along with setting title, labels and initial parameters
@@ -39,7 +35,8 @@ def start_mock():
     rw.add_plot(window, plotter.figure, "-CANVAS-")
     
     # start window operation - it contains a loop that's broken on window exit
-    rw.run_window(window, plotter, comm, det, mock=True)
+    # rw.run_window(window, plotter, comm, det, mock=True)
+    rw.run_window(window, plotter, comm, mock=True)
 
     # stop the window operation, delete it's object to make sure all threads are closed
     window.close()
@@ -55,11 +52,11 @@ def run_app():
     """
     # create & initialize all the elements needed - in order:
     # window, plotting tool, serial communication, signal analyzer
-    window, plotter, comm, det = start()
+    window, plotter, comm = start()
 
     
     # start window operation - it contains a loop that's broken on window exit
-    rw.run_window(window, plotter, comm, det)
+    rw.run_window(window, plotter, comm)
     # stop the application if window was closed
     stop(window, comm)
 
@@ -88,17 +85,14 @@ def start():
     comm = serial_utils.Serial("COM6", 9600)
     comm.start_receiving()
 
-    # initialize signal analyzer
-    det = detector_utils.Detector(comm.get_received(), 10)
-
     # prepare x axis data range
     data_range = numpy.linspace(0, comm.data_max_count, num=comm.data_max_count)
     # initiate the plotting tool, along with setting title, labels and initial parameters
     plotter = plot_utils.Plotter(x_data=data_range, y_data=comm.get_received(), \
-        title="Signal strength", labels=['Sample #', 'Signal strength'], y_limits=[0, 1024])
-    # assign the detector's output as data points on the plot - we won't need to explicitly
-    # update plotter.signal_data anymore
-    plotter.signal_data = det.signals
+        title="Signal strength", labels=['Sample #', 'Signal strength'], y_limits=[0, 1])
+                # assign the detector's output as data points on the plot - we won't need to explicitly
+                # update plotter.signal_data anymore
+                # plotter.signal_data = det.signals
     # draw the plot for the first time - this allows us to load the plot / canvas element
     # of the app window fully
     plotter.draw()
@@ -106,7 +100,7 @@ def start():
     rw.add_plot(window, plotter.figure, "-CANVAS-")
 
     # return all the initalized objects
-    return window, plotter, comm, det
+    return window, plotter, comm
 
 def stop(window, serial_communication):
     """

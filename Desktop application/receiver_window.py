@@ -1,4 +1,3 @@
-import threading
 import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import PySimpleGUI as sg
@@ -21,11 +20,9 @@ mouse_bind = Button.left
 sg.theme('DefaultNoMoreNagging')
 # layout of configuration pane of elements - all user input fields
 inputs_layout = [[sg.Text("COM port", size=10), sg.Input("COM6", key="-PORT_INPUT-", size=5, enable_events=True)],
-    [sg.Text("Threshold", size=10), sg.Input("10", key="-THRESHOLD_INPUT-", size=5, enable_events=True)],
     [sg.Text("Key to press", size=10), sg.Input("Enter", key="-CURRENT_KEY-", size=5, enable_events=True, disabled=True), sg.Button("Change key", key="-CHANGE_KEY-", size=10)],
     [sg.Radio("Key", "BIND_RADIO", key="-KEY_BIND-", default=True, enable_events=True), sg.Radio("LMB", "BIND_RADIO", key="-LMB_BIND-", default=False, enable_events=True), 
-        sg.Radio("RMB", "BIND_RADIO", key="-RMB_BIND-", default=False, enable_events=True)],
-    [sg.Button("Calibrate", key="-CALIBRATE-"), sg.Button("Help", key="-HELP-")]]
+        sg.Radio("RMB", "BIND_RADIO", key="-RMB_BIND-", default=False, enable_events=True)]]
 
 # layout of the app window - left : configuration pane; right : plot
 layout = [[sg.Frame("Configuration", inputs_layout, font='Helvetica 18'), sg.Canvas(key='-CANVAS-')],
@@ -78,7 +75,7 @@ def add_plot(window, figure, plot_key):
     """
     return draw_figure(window[plot_key].TKCanvas, figure)
 
-def run_window(window, plotter=None, comm=None, det=None, mock=False):
+def run_window(window, plotter=None, comm=None, mock=False):
     """
     Facilitate application window operations. Handle any changes in configuration, as well as orchestrate
     signal analysis.
@@ -91,8 +88,6 @@ def run_window(window, plotter=None, comm=None, det=None, mock=False):
         Object of plotting tool.
     comm : serial_utils.Serial or None, default None
         Object of serial communication tool.
-    det : detector_utils.Detector or None, default None
-        Object of signal analysis tool.
     mock : bool, default False
         Flag indicating if the app was launched in testing mode.
     """
@@ -102,7 +97,7 @@ def run_window(window, plotter=None, comm=None, det=None, mock=False):
     # any later changes to the configuration object will be automatically saved
     configuration = sg.UserSettings()
     configuration.load()
-    apply_configuration(configuration, window, comm, det)
+    apply_configuration(configuration, window, comm)
 
     # automatically launch signal analysis tool calibration on launch
     # calibrate(det, plotter, comm)
@@ -118,10 +113,7 @@ def run_window(window, plotter=None, comm=None, det=None, mock=False):
             return
  
         # if signal analysis tool available: check signal for peaks
-        if det is not None:
-            check_receiving(comm, det)
-            # only check new data points
-            det.detect(len(comm.get_received_delta()))
+        check_receiving(comm)
 
         # no need to update the plotter y data, because it was inicialized as a reference to `received` array from object of Serial
         plotter.refresh_y_data()
@@ -170,21 +162,11 @@ def run_window(window, plotter=None, comm=None, det=None, mock=False):
             bind_keyboard = True
             # make sure to save it in configuration
             configuration['-bind-'] = 'KEY'
-        # if the `calibrate` button has been pressed
-        elif event == "-CALIBRATE-":
-            # launch calibration function
-            calibrate(det, plotter, comm)
         # if the `help` button has been pressed
         elif event == "-HELP-":
             display_help()
-        # if the threshold value has been changed
-        elif event == "-THRESHOLD_INPUT-":
-            # apply the change to the singal analysis tool also
-            handle_threshold(values['-THRESHOLD_INPUT-'], window, det)
-            # make sure to save it in configuration
-            configuration['-threshold-'] = values['-THRESHOLD_INPUT-']
 
-def apply_configuration(configuration, window, comm, det):
+def apply_configuration(configuration, window, comm):
     """
     Apply the configuration specified by user on previous launch, if avaliable.
     Update the relevant objects and window elements.
@@ -232,10 +214,6 @@ def apply_configuration(configuration, window, comm, det):
         window['-LMB_BIND-'].update(False)
         window['-RMB_BIND-'].update(False)
         window['-KEY_BIND-'].update(True)
-    # apply threshold (standard deviation multiply) if available
-    if configuration['-threshold-']:
-        window['-THRESHOLD_INPUT-'].update(configuration['-threshold-'])
-        det.threshold = float(configuration['-threshold-'])
     
     # if this is the first launch of the application - automatically display the help text
     if not configuration['-first-']:
@@ -243,39 +221,6 @@ def apply_configuration(configuration, window, comm, det):
 
     # indicate that the application has been launched, so the help text won't be displayed on next launch
     configuration['-first-'] = "False"
-
-def calibrate(det, plotter, comm):
-    """
-    Calibrate the signal analysis tool.
-
-    Parameters
-    ----------
-    det : detector_utils.Detector
-        Object of signal analysis tool.
-    plotter : plot_utils.Plotter
-        Object of plotting tool.
-    comm : serial_utils.Serial
-        Object of serial communication tool.
-    """
-    # mark that the calibration has started
-    det.calibrating = True
-    # launch the calibration thread
-    # the coma in args tuple for threading.Thread is necessary for it to be treated as tuple, not a string, and thus properly passing the argument to target method
-    calibration_thread = threading.Thread(target=det.gather_calibration_data, args=(comm.get_received_delta,))
-    calibration_thread.start()
-
-    # display a pop up with info about the calibration for 10 seconds
-    sg.Popup("Please wait for the calibration to complete.\nPlease don't try to do anything in particular, just be yourself and enjoy the calibration period. It shouldn't take more than 10 seconds, so not much more to go!", auto_close=True, auto_close_duration=10, button_type=sg.POPUP_BUTTONS_NO_BUTTONS)
-
-    # after the pop up closed stop the thread
-    det.calibrating = False
-    calibration_thread.join()
-    
-    # calculate new values
-    det.calibrate()
-
-    # make sure to update the threshold plot accordingly
-    update_plot_threshold(det.border, plotter)
 
 def update_plot_threshold(new_val, plotter):
     """
@@ -290,7 +235,7 @@ def update_plot_threshold(new_val, plotter):
     """
     plotter.update_threshold(new_val)
 
-def check_receiving(comm, det):
+def check_receiving(comm):
     """
     Make sure there were no errors in serial communication. If everything's going smoothly check if any blinks were detected.
 
@@ -309,9 +254,9 @@ def check_receiving(comm, det):
     elif not comm.receiving:
         comm.start_receiving()
     else:
-        check_for_blink(comm, det)
+        check_for_blink(comm)
 
-def check_for_blink(comm, det):
+def check_for_blink(comm):
     """
     Check if any blinks were detected. If so - simulate the press of set button / key.
 
@@ -322,7 +267,7 @@ def check_for_blink(comm, det):
     det : detector_utils.Detector
         Object of signal analysis tool.
     """
-    if not comm.triggered and det.signals[-1] > 600:
+    if not comm.triggered and comm.get_received()[-1] > 0:
         comm.triggered = True
         if bind_keyboard:
             keyboard.press(key_bind)
@@ -330,7 +275,7 @@ def check_for_blink(comm, det):
         else:
             mouse.press(mouse_bind)
             mouse.release(mouse_bind)
-    elif comm.triggered and det.signals[-1] <= 600:
+    elif comm.triggered and comm.get_received()[-1] < 1:
         comm.triggered = False
 
 def handle_key_bind(window, text_key):
@@ -378,44 +323,13 @@ def display_help():
     """
 
     help_text = """Hi!
-    On the right side of the main window you can see the plot of current signal, threshold and detection.
-    The blue, wiggly line is signal received from the device.
-    The red, straight line is the current detection border - calculated as threshold * standard deviation + mean of the received signal.
-    The orange line depicts the detections - if it raises to the top a blink has been detected.
+    On the right side of the main window you can see the plot of current signal.
+    The blue, line is signal received from the device - 1 if blink was detected, 0 - otherwise.
 
     On the left side of the main window you can see the configuration pane and in it some fields:
     - COM port : the serial communication port through which the communication happens. Make sure to select the one that your device is connected into.
-    - Threshold : the number of standart deviations from the mean above which the blink will be detected. Marked on the plot with a red line (value = threshold * standard deviation + mean). IMPORTANT: Changing this doesn't take effect untill calibration!
     - Key to press : just displays the current keybind, which can be changed using the "Change key" button. During changing the bind blink detection will be suspended untill a key is pressed (and thus key bound).
     - Key / LMB / RMB : radio buttons, which specify wheter the bound key, or according (left/right) mouse button will be pressed on blink detection.
-    - Calibrate : button starting the calibration process. It takes around 10 seconds, so get comfortable and relax.
     - Help button : displays this window.
     """
     sg.Popup(help_text, keep_on_top=True)
-
-def handle_threshold(new_val, window, det):
-    """
-    Handle a change made in Threshold input window.
-
-    Parameters
-    ----------
-    new_val : str
-        Value entered in the input window.
-    window : PySimpleGui.Window
-        Object of the application window.
-    det : detector_utils.Detector
-        Object of singal analyzer.
-    """
-
-    # parse the new value - if it's empty set it to 0
-    if new_val == '':
-        new_val = '0'
-    try:
-        new_val = float(new_val)
-    except ValueError:
-        # if an invalid (non-numerical) value was entered clear the input field
-        new_val = 0
-        window['-THRESHOLD_INPUT-'].Update('')
-    
-    # update the threshold also in the signal analyzer
-    det.threshold = new_val
