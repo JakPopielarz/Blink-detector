@@ -2,7 +2,7 @@
 #define UTILS_H
 class DataContainer {
     private:
-        enum { maxLimit = 20 };
+        enum { maxLimit = 1000 };
 
         int lastFilledIndex = -1;
         bool incrementCount = true;

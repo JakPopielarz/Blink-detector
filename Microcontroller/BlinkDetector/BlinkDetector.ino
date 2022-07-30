@@ -46,6 +46,6 @@ void loop(void) {
    // output last detection result to the serial port
    Serial.println(processingResults.data[processingResults.getMaxLimit()-1]);
    
-   delay(1000); // Delay 1s to allow easier debug
+   // delay(1000); // Delay 1s to allow easier debug
    delay(7);
 }
