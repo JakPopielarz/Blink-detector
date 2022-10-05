@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Blink configuration</title>
+
+    <link rel="stylesheet" href="bootstrap.min.css"> 
+  </head>
+  <body>
+    <div class="container">
+
+    <form>
+        <div class="form-group row">
+          <label class="col-4 col-form-label" for="keyboard-mouse">Bind keyboard or mouse?</label> 
+          <div class="col-8">
+            <select id="keyboard-mouse" name="keyboard-mouse"class="custom-select">
+              <option value="keyboard">Keyboard</option>
+              <option value="lmb">Left Mouse Button</option>
+              <option value="rmb">Right Mouse Button</option>
+            </select>
+          </div>
+        </div>
+
+	<div class="alert alert-primary" role="alert">
+		To capture a new keybind click the button below, then click into the text box and just press your key! If you don't do any of that the previous configuration won't be overriden.
+	</div>
+
+        <div class="form-group row">
+            <button type="button" name="btn-capture" id="btn-capture" class="btn btn-primary col-4">Capture new keybind</button>
+            <p class="col-4" id="console-log">...</p>
+        </div> 
+        <div class="form-group row">
+          <label for="keybind" class="col-4 col-form-label">New keybind</label> 
+          <div class="col-8">
+            <input id="keybind" name="keybind" type="text" class="form-control" aria-describedby="keybindHelpBlock">
+          </div>
+        </div>
+	
+	<br />
+
+        <div class="form-group row">
+          <div class="offset-4 col-8">
+            <button name="submit" type="submit" class="btn btn-primary">Apply Configuration</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+	<script src="index.js"></script>
+  </body>
+</html>
