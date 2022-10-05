@@ -4,6 +4,11 @@ btnReset = document.getElementById('btn-capture'),
 capturing = false;
 
 function logMessage(message) {
+    let child = consoleLog.firstChild;
+    while (child) {
+        consoleLog.removeChild(child);
+        child = consoleLog.firstChild;
+    }
   consoleLog.innerHTML += `${message}<br>`;
 }
 
@@ -15,13 +20,25 @@ function clearMessages() {
     }
 }
 
-textarea.addEventListener('keyup', (e) => {
-    if (capturing) {
+window.addEventListener('keydown', function (e) {
+    if (capturing && e.key == "Enter"){
         clearMessages();
-        logMessage(`Key "${textarea.value}" captured`);
+        logMessage(`You pressed ${e.key}`);
+
+        textarea.value = e.key;
         capturing = !capturing;
     }
-});
+}, false);
+
+window.addEventListener('keyup', function (e) {
+    if (capturing) {
+        clearMessages();
+        logMessage(`You pressed ${e.key}`);
+    
+        textarea.value = e.key;
+        capturing = !capturing;
+    }
+  }, false);
 
 btnReset.addEventListener('click', (e) => {
     if (capturing) return;
